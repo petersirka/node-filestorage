@@ -1,0 +1,21 @@
+{
+    "name": "filestorage",
+    "version": "1.0.0",
+    "description": "File storage for your web sites",
+    "main": "./index.js",
+    "keywords": [ "filestorage", "storage", "file", "web", "partial", "express", "stream", "upload"],
+    "engines": {
+        "node": "*"
+    },
+    "readmeFilename": "readme.md",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/petersirka/node-filestorage.git"
+    },
+    "author": {
+        "name": "Peter Širka"
+    }
+}
