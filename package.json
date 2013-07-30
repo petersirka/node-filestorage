@@ -1,6 +1,6 @@
 {
     "name": "filestorage",
-    "version": "1.0.0",
+    "version": "0.0.1",
     "description": "File storage for your web sites",
     "main": "./index.js",
     "keywords": [ "filestorage", "storage", "file", "web", "partial", "express", "stream", "upload"],
