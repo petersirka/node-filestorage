@@ -1,5 +1,5 @@
-The File Storage For a Web Pages
-================================
+Storage for storing uploaded files in node.js
+=============================================
 
 - Best use with [www.partialjs.com](http://partialjs.com)
 
