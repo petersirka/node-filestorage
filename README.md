@@ -1,7 +1,23 @@
-Storage for storing uploaded files in node.js
-=============================================
+Storage for storing files
+=========================
 
 - Best use with [www.partialjs.com](http://partialjs.com)
+- perfect solution for web sites
+- supports custom path
+- supports insert, update and remove files
+- supports reading files
+- supports sending files via HTTP
+- supports file listing
+- supports changelog (insert, update, remove)
+- supports auto-pipe stream to response
+- supports adding custom attribute to each file
+- supports file streaming via HTTP - Content Range
+- supports custom handler executing before saving file to the storage
+- auto-read properties of picture: width and height
+- auto-create directories and the good logic
+- supports stat() and copy()
+- 100% pure JavaScript
+- MIT license
 
 ***
 

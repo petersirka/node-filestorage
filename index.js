@@ -31,6 +31,7 @@ var events = require('events');
 var LENGTH_DIRECTORY = 10;
 var LENGTH_HEADER = 2048;
 var FILENAME_DB = 'config';
+var FILENAME_CHANGELOG = 'changelog.log';
 var EXTENSION = '.data';
 var EXTENSION_TMP = '.tmp';
 var UNDEFINED = 'undefined';
@@ -49,6 +50,7 @@ function FileStorage(path) {
 	this.options = { index: 0, count: 0 };
 
 	this.verification();
+	this.onSave = function(filename, header, next) { next(); };
 }
 
 FileStorage.prototype = new events.EventEmitter();
@@ -90,6 +92,46 @@ FileStorage.prototype._save = function() {
 	var self = this;
 	var filename = path.join(self.path, FILENAME_DB);
 	fs.writeFile(filename, JSON.stringify(self.options));
+	return self;
+};
+
+FileStorage.prototype._append_changelog = function(id, description) {
+
+	var self = this;
+
+	if (typeof(id) === UNDEFINED)
+		return self;
+
+	if (typeof(description) === UNDEFINED)
+		return self;
+
+	var dd = new Date();
+
+	var y = dd.getFullYear();
+	var M = (dd.getMonth() + 1).toString();
+	var d = dd.getDate().toString();
+	var h = dd.getHours().toString();
+	var m = dd.getMinutes().toString();
+	var s = dd.getSeconds().toString();
+
+	if (M.length === 1)
+		M = '0' + M;
+
+	if (d.length === 1)
+		d = '0' + d;
+
+	if (m.length === 1)
+		m = '0' + m;
+
+	if (h.length === 1)
+		h = '0' + h;
+
+	if (s.length === 1)
+		s = '0' + s;
+
+	var dt = y + '-' + M + '-' + d + ' ' + h + ':' + m + ':' + s;
+	fs.appendFile(path.join(self.path, FILENAME_CHANGELOG), dt + ' - #' + id + ' ' + description + '\n');
+
 	return self;
 };
 
@@ -144,32 +186,36 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 
 	var self = this;
 
-	fs.stat(filename +  EXTENSION_TMP, function(err, stats) {
+	self.onSave(filename + EXTENSION_TMP, header, function() {
 
-		if (!err)
-			header.length = stats.size;
+		fs.stat(filename +  EXTENSION_TMP, function(err, stats) {
 
-		header.stamp = new Date().getTime();
+			if (!err)
+				header.length = stats.size;
 
-		var json = JSON.stringify(header);
-		json += new Array((LENGTH_HEADER - json.length) + 1).join(' ');
+			header.stamp = new Date().getTime();
 
-		var stream = fs.createWriteStream(filename + EXTENSION);
+			var json = JSON.stringify(header);
+			json += new Array((LENGTH_HEADER - json.length) + 1).join(' ');
 
-		stream.write(json);
+			var stream = fs.createWriteStream(filename + EXTENSION);
 
-		var read = fs.createReadStream(filename + EXTENSION_TMP);
-		read.pipe(stream);
+			stream.write(json);
 
-		setImmediate(function() {
+			var read = fs.createReadStream(filename + EXTENSION_TMP);
+			read.pipe(stream);
 
-			fs.unlink(filename + EXTENSION_TMP);
+			setImmediate(function() {
 
-			if (fnCallback)
-				fnCallback(null, id, header);
+				fs.unlink(filename + EXTENSION_TMP);
 
-			self._append(directory, header, id.toString(), type);
-			self.emit(type, id, header);
+				if (fnCallback)
+					fnCallback(null, id, header);
+
+				self._append(directory, header, id.toString(), type);
+				self.emit(type, id, header);
+
+			});
 
 		});
 
@@ -215,9 +261,10 @@ FileStorage.prototype._mkdir = function(directory, noPath) {
 	@buffer {String, Stream, Buffer}
 	@custom {String, Object} :: optional
 	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
+	@change {String} :: optional, changelog
 	return {FileStorage}
 */
-FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, id) {
+FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change, id) {
 
 	var self = this;
 	var options = self.options;
@@ -238,6 +285,9 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, id) {
 		options.count++;
 	} else
 		index = utils.parseIndex(id);
+
+	if (change)
+		self._append_changelog(index, change);
 
 	var directory = self._directory(index);
 
@@ -332,22 +382,26 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, id) {
 	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
 	return {FileStorage}
 */
-FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback) {
-	return this.insert(name, buffer, fnCallback, custom, id);
+FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback, change) {
+	return this.insert(name, buffer, fnCallback, custom, change, id);
 };
 
 /*
 	Remove a file
 	@id {String or Number}
 	@fnCallback {Function} :: optional, params: @err {Error}
+	@change {String} :: optional, changelog
 	return {FileStorage}
 */
-FileStorage.prototype.remove = function(id, fnCallback) {
+FileStorage.prototype.remove = function(id, fnCallback, change) {
 
 	var self = this;
 	var index = utils.parseIndex(id.toString());
 	var directory = self._directory(index);
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0') + EXTENSION;
+
+	if (change)
+		self._append_changelog(index, change);
 
 	fs.unlink(filename, function(err) {
 
@@ -563,7 +617,7 @@ FileStorage.prototype.listing = function(fnCallback) {
 
 		fs.readFile(filename + FILENAME_DB, function(err, data) {
 
-			if (err) {
+			if (err)
 				self.emit('error', err);
 			else
 				builder.push(data.toString('utf8'));
