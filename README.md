@@ -21,6 +21,95 @@ Storage for storing files
 
 ***
 
+```javascript
+
+var storage = require('filestorage').create('/path/to/directory/');
+
+// ================================================
+// FILESTORAGE INSERT
+// ================================================
+
+/*
+	Insert a file
+	@name {String}
+	@buffer {String, Stream, Buffer}
+	@custom {String, Object} :: optional
+	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
+	@change {String} :: optional, changelog
+	return {Number} :: file id
+*/
+storage.insert(name, buffer, [custom], [fnCallback], [changelog]);
+
+// EXAMPLE:
+
+storage.insert('logo.png', '/users/petersirka/desktop/logo.png', 'my custom data', function(err, id, stat) {
+
+	console.log(id);
+	console.log(stat);
+
+	// stat.name        - file name
+	// stat.length      - file length
+	// stat.type        - content type
+	// stat.width       - picture width
+	// stat.height      - picture height
+	// stat.custom      - your custom value
+	// stat.stamp       - date created ticks, new Date(stat.stamp)
+
+}, 'new logo');
+
+// OR
+
+var id = storage.insert('logo.png', fs.createReadStream('/users/petersirka/desktop/logo.png'));
+console.log(id);
+
+// OR
+
+var id = storage.insert('plaintext.txt', 'YW55IGNhcm5hbCBwbGVhc3VyZS4=');
+console.log(id);
+
+// OR
+
+var id = storage.insert('plaintext.txt', new Buffer('YW55IGNhcm5hbCBwbGVhc3VyZS4=', 'base64'));
+console.log(id);
+
+// ================================================
+// FILESTORAGE UPDATE
+// ================================================
+
+
+/*
+	Update a file
+	@id {String or Number}
+	@name {String}
+	@buffer {String, Stream, Buffer}
+	@custom {String, Object} :: optional
+	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
+	@change {String} :: optional, changelog
+	return {FileStorage}
+*/
+storage.update(id, name, buffer, [custom], [fnCallback], [change]);
+
+// EXAMPLE:
+
+storage.update(1, 'logo.jpg', '/users/petersirka/desktop/logo.jpg', function(err, id, stat) {
+
+	console.log(id);
+	console.log(stat);
+
+	// stat.name        - file name
+	// stat.length      - file length
+	// stat.type        - content type
+	// stat.width       - picture width
+	// stat.height      - picture height
+	// stat.custom      - your custom value
+	// stat.stamp       - date created ticks, new Date(stat.stamp)
+
+});
+
+```
+
+***
+
 ## The MIT License
 
 Copyright (c) 2012-2013 Peter Širka <petersirka@gmail.com>

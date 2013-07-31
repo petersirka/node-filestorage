@@ -28,7 +28,7 @@ var http = require('http');
 var https = require('https');
 var events = require('events');
 
-var LENGTH_DIRECTORY = 10;
+var LENGTH_DIRECTORY = 9;
 var LENGTH_HEADER = 2048;
 var FILENAME_DB = 'config';
 var FILENAME_CHANGELOG = 'changelog.log';
@@ -83,7 +83,6 @@ FileStorage.prototype._load = function() {
 
 	options.index = config.index;
 	options.count = config.count;
-	options.size = config.size;
 
 	return self;
 };
@@ -140,8 +139,10 @@ FileStorage.prototype._append = function(directory, value, id, eventname) {
 	var self = this;
 	var filename = directory + '/' + FILENAME_DB;
 
+	var num = typeof(id) === 'number' ? id : parseInt(id, 10);
+
 	if (eventname === 'insert') {
-		fs.appendFile(filename, id + '=' + JSON.stringify(value) + '\n');
+		fs.appendFile(filename, JSON.stringify(util._extend({ id: num }, value)) + '\n');
 		return self;
 	}
 
@@ -155,9 +156,8 @@ FileStorage.prototype._append = function(directory, value, id, eventname) {
 		for (var i = 0; i < length; i++) {
 
 			var line = arr[i];
-			var index = line.indexOf('=');
 
-			if (index === -1)
+			if (line.length < 1)
 				continue;
 
 			if (isHit) {
@@ -165,11 +165,10 @@ FileStorage.prototype._append = function(directory, value, id, eventname) {
 				continue;
 			}
 
-			var id = line.substring(0, index);
-
-			if (id === id) {
+			if (line.indexOf('"id":' + id + ',') !== -1) {
 				if (eventname === 'update')
-					builder.push(id + '=' + JSON.stringify(value));
+					builder.push(JSON.stringify(util._extend({ id: num }, value)));
+
 				isHit = true;
 			}
 			else
@@ -232,7 +231,13 @@ FileStorage.prototype._directory = function(index, isDirectory) {
 	var self = this;
 	var options = self.options;
 	var id = (isDirectory ? index : self._directory_index(index)).toString().padLeft(LENGTH_DIRECTORY, '0');
-	return path.join(self.path, id);
+	var length = id.length;
+	var directory = '';
+
+	for (var i = 0; i < length; i++)
+		directory += (i % 3 === 0 && i > 0 ? '-' : '') + id[i];
+
+	return path.join(self.path, directory);
 };
 
 FileStorage.prototype._mkdir = function(directory, noPath) {
@@ -262,7 +267,7 @@ FileStorage.prototype._mkdir = function(directory, noPath) {
 	@custom {String, Object} :: optional
 	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
 	@change {String} :: optional, changelog
-	return {FileStorage}
+	return {Number} :: file id
 */
 FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change, id) {
 
@@ -270,9 +275,9 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	var options = self.options;
 
 	if (typeof(custom) === 'function') {
-		var tmp = fnCallback;
+		change = fnCallback;
 		fnCallback = custom;
-		custom = fnCallback;
+		custom = undefined;
 	}
 
 	var index = 0;
@@ -380,10 +385,11 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	@buffer {String, Stream, Buffer}
 	@custom {String, Object} :: optional
 	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
+	@change {String} :: optional, changelog
 	return {FileStorage}
 */
 FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback, change) {
-	return this.insert(name, buffer, fnCallback, custom, change, id);
+	return this.insert(name, buffer, custom, fnCallback, change, id);
 };
 
 /*
@@ -550,7 +556,8 @@ FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 		var stream = fs.createReadStream(filename, { start: LENGTH_HEADER });
 		self.emit('copy', id, stat, stream, directory);
 
-		stream.pipe(fs.createWriteStream(path.join(directory, name)));
+		var writer = fs.createWriteStream(path.join(directory, name));
+		stream.pipe(writer);
 
 		if (!fnCallback)
 			return;
@@ -602,7 +609,7 @@ FileStorage.prototype.listing = function(fnCallback) {
 	var directory = [];
 	var builder = [];
 
-	for (var i = 1; i < max; i++)
+	for (var i = 1; i <= max; i++)
 		directory.push(self._directory(i, true));
 
 	function config() {
@@ -615,7 +622,7 @@ FileStorage.prototype.listing = function(fnCallback) {
 			return;
 		}
 
-		fs.readFile(filename + FILENAME_DB, function(err, data) {
+		fs.readFile(path.join(filename, FILENAME_DB), function(err, data) {
 
 			if (err)
 				self.emit('error', err);
@@ -733,4 +740,10 @@ FileStorage.prototype.pipe = function(id, res, req, download) {
 	});
 
 	return self;
+};
+
+exports.create = function(path) {
+	var storage = new FileStorage(path);
+	storage.on('error', function() {});
+	return storage;
 };
