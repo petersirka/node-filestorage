@@ -170,6 +170,7 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 
 			self._append(directory, header, id.toString(), type);
 			self.emit(type, id, header);
+
 		});
 
 	});
@@ -445,12 +446,12 @@ FileStorage.prototype.read = function(id, fnCallback) {
 
 };
 
-var storage = new FileStorage('/users/petersirka/desktop/nonono/');
+//var storage = new FileStorage('/users/petersirka/desktop/nonono/');
 
 //.readFileSync('/users/petersirka/desktop/logo.png')
 //storage.insert('logo.png', fs.createReadStream('/users/petersirka/desktop/logo.png'));
 // storage.update('1', 'logo', fs.createReadStream('/users/petersirka/desktop/ios.gif'));
-storage.insert('aaaa.gif', fs.createReadStream('/users/petersirka/desktop/aaaa.gif'));
-storage.insert('smadny-mnich.jpg', fs.createReadStream('/users/petersirka/desktop/smadny-mnich.jpg'), 'OK');
+//storage.insert('aaaa.gif', fs.createReadStream('/users/petersirka/desktop/aaaa.gif'));
+//storage.insert('smadny-mnich.jpg', fs.createReadStream('/users/petersirka/desktop/smadny-mnich.jpg'), 'OK');
 //storage.insert('smadny-mnich.jpg', '/users/petersirka/desktop/smadny-mnich.jpg', function(id) { console.log(id); });
 
