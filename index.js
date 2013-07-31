@@ -468,6 +468,44 @@ FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 };
 
 /*
+	Copy
+	@id {String or Number}
+	@directory {String}
+	@fnCallback {Function} :: params: @err {Error}
+	@name {String} :: optional, new filename
+	return {FileStorage}
+*/
+FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
+
+	var self = this;
+	self.stat(id, function(err, stat, filename) {
+
+		if (err) {
+			self.emit('error', err);
+			fnCallback(err);
+			return;
+		}
+
+		if (typeof(name) === 'undefined')
+			name = stat.name;
+
+		var stream = fs.createReadStream(filename, { start: LENGTH_HEADER });
+		self.emit('copy', id, stat, stream, directory);
+
+		stream.pipe(fs.createWriteStream(path.join(directory, name)));
+
+		if (!fnCallback)
+			return;
+
+		stream.on('end', function() {
+			fnCallback(null);
+		});
+	});
+
+	return self;
+};
+
+/*
 	Read a file
 	@id {String or Number}
 	@fnCallback {Function} :: params: @err {Error}, @stream {ReadStream}, @stat {Object}
