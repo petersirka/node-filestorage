@@ -166,7 +166,7 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 			fs.unlink(filename + EXTENSION_TMP);
 
 			if (fnCallback)
-				fnCallback(null, id);
+				fnCallback(null, id, header);
 
 			self._append(directory, header, id.toString(), type);
 			self.emit(type, id, header);
@@ -205,6 +205,14 @@ FileStorage.prototype._mkdir = function(directory, noPath) {
 	return true;
 };
 
+/*
+	Insert a file
+	@name {String}
+	@buffer {String, Stream, Buffer}
+	@custom {String, Object} :: optional
+	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
+	return {FileStorage}
+*/
 FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, id) {
 
 	var self = this;
@@ -311,10 +319,25 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, id) {
 	return index;
 };
 
+/*
+	Update a file
+	@id {String or Number}
+	@name {String}
+	@buffer {String, Stream, Buffer}
+	@custom {String, Object} :: optional
+	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
+	return {FileStorage}
+*/
 FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback) {
 	return this.insert(name, buffer, fnCallback, custom, id);
 };
 
+/*
+	Remove a file
+	@id {String or Number}
+	@fnCallback {Function} :: optional, params: @err {Error}
+	return {FileStorage}
+*/
 FileStorage.prototype.remove = function(id, fnCallback) {
 
 	var self = this;
@@ -340,6 +363,12 @@ FileStorage.prototype.remove = function(id, fnCallback) {
 	return self;
 };
 
+/*
+	A file information
+	@id {String or Number}
+	@fnCallback {Function} :: params: @err {Error}, @stat {Object}
+	return {FileStorage}
+*/
 FileStorage.prototype.stat = function(id, fnCallback) {
 
 	var self = this;
@@ -362,9 +391,23 @@ FileStorage.prototype.stat = function(id, fnCallback) {
 	return self;
 };
 
+/*
+	Send a file
+	@id {String or Number}
+	@url {String}
+	@fnCallback {Function} :: optional, params: @err {Error}, @response {String}
+	@headers {Object} :: optional, additional headers
+	return {FileStorage}
+*/
 FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 
 	var self = this;
+
+	if (typeof(fnCallback) === 'object') {
+		var tmp = headers;
+		fnCallback = headers;
+		headers = tmp;
+	}
 
 	self.stat(id, function(err, stat, filename) {
 
@@ -424,6 +467,12 @@ FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 	return self;
 };
 
+/*
+	Read a file
+	@id {String or Number}
+	@fnCallback {Function} :: params: @err {Error}, @stream {ReadStream}, @stat {Object}
+	return {FileStorage}
+*/
 FileStorage.prototype.read = function(id, fnCallback) {
 
 	var self = this;
@@ -438,20 +487,114 @@ FileStorage.prototype.read = function(id, fnCallback) {
 
 		var stream = fs.createReadStream(filename, { start: LENGTH_HEADER });
 		self.emit('read', id, stat, stream);
-		fnCallback(stream, stat);
+		fnCallback(null, stream, stat);
 
 	});
 
 	return self;
-
 };
 
-//var storage = new FileStorage('/users/petersirka/desktop/nonono/');
+/*
+	Pipe a stream to Stream or HttpResponse
+	@id {String or Number}
+	@res {HttpResponse or Stream}
+	@req {HttpRequest} :: optional,
+	@download {String or Boolean} :: optional, attachment - if string filename is download else if boolean filename will a stat.name
+	return {FileStorage}
+*/
+FileStorage.prototype.pipe = function(id, res, req, download) {
 
-//.readFileSync('/users/petersirka/desktop/logo.png')
-//storage.insert('logo.png', fs.createReadStream('/users/petersirka/desktop/logo.png'));
-// storage.update('1', 'logo', fs.createReadStream('/users/petersirka/desktop/ios.gif'));
-//storage.insert('aaaa.gif', fs.createReadStream('/users/petersirka/desktop/aaaa.gif'));
-//storage.insert('smadny-mnich.jpg', fs.createReadStream('/users/petersirka/desktop/smadny-mnich.jpg'), 'OK');
-//storage.insert('smadny-mnich.jpg', '/users/petersirka/desktop/smadny-mnich.jpg', function(id) { console.log(id); });
+	var self = this;
+	self.stat(id, function(err, stat, filename) {
 
+		var isResponse = typeof(res.writeHead) === 'undefined';
+
+		if (err) {
+
+			if (isResponse) {
+				res.success = true;
+				res.writeHead(404, { 'Content-Type': 'text/plain' });
+				res.end(NOTFOUND);
+				return;
+			}
+
+			throw err;
+		}
+
+		if (!isResponse) {
+			self.emit('pipe', id, stat, fs.createReadStream(filename, { start: LENGTH_HEADER }).pipe(res));
+			return;
+		}
+
+		var beg = 0;
+		var end = 0;
+		var length = stat.length;
+		var isRange = false;
+
+		if (req) {
+
+			if (req.headers['if-none-match'] === stat.stamp.toString()) {
+				res.success = true;
+				res.writeHead(304);
+				res.end();
+				return;
+			}
+
+			var range = req.headers['range'] || '';
+
+			if (range.length > 0) {
+
+				var arr = range.replace(/bytes=/, '').split('-');
+				beg = parseInt(arr[0] || '0', 10);
+				end = parseInt(arr[1] || '0', 10);
+				isRange = true;
+
+				if (end === 0)
+					end = length - 1;
+
+				if (beg > end) {
+					beg = 0;
+					end = length - 1;
+				}
+
+				length = (end - beg) + 1;
+			}
+		}
+
+		var expires = new Date();
+		expires.setMonth(expires.getMonth() + 2);
+
+		var headers = { 'Content-Type': stat.type,
+						'Content-Length': length,
+						'Etag': stat.stamp,
+						'Last-Modified': new Date(stat.stamp).toUTCString(),
+						'Accept-Ranges': 'bytes',
+						'Cache-Control': 'public',
+						'Expires': expires,
+						'X-Powered-By': 'node.js FileStorage',
+						'Vary': 'Accept-Encoding'
+					};
+
+		if (typeof(download) === 'string')
+			headers['Content-Disposition'] = 'attachment; filename=' + download;
+		else if (download === true)
+			headers['Content-Disposition'] = 'attachment; filename=' + stat.name;
+
+		var options = { start: LENGTH_HEADER };
+
+		if (beg > 0)
+			options.start += beg;
+
+		if (end > 0)
+			options.end = end;
+
+		if (beg > 0 || end > 0)
+			headers['Content-Range'] = 'bytes ' + beg + '-' + end + '/' + stat.length;
+
+		res.writeHead(isRange ? 206 : 200, headers);
+		self.emit('pipe', id, stat, fs.createReadStream(filename, options).pipe(res));
+
+	});
+
+	return self;
+};
