@@ -178,10 +178,14 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 	return self;
 };
 
-FileStorage.prototype._directory = function(index) {
+FileStorage.prototype._directory_index = function(index) {
+	return Math.floor(index / 1000) + 1;
+};
+
+FileStorage.prototype._directory = function(index, isDirectory) {
 	var self = this;
 	var options = self.options;
-	var id = (Math.floor(index / 1000) + 1).toString().padLeft(LENGTH_DIRECTORY, '0');
+	var id = (isDirectory ? index : self._directory_index(index)).toString().padLeft(LENGTH_DIRECTORY, '0');
 	return path.join(self.path, id);
 };
 
@@ -227,7 +231,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, id) {
 	var index = 0;
 	var eventname = 'update';
 
-	if (typeof(id) === 'undefined') {
+	if (typeof(id) === UNDEFINED) {
 		options.index++;
 		index = options.index;
 		eventname = 'insert';
@@ -486,7 +490,7 @@ FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 			return;
 		}
 
-		if (typeof(name) === 'undefined')
+		if (typeof(name) === UNDEFINED)
 			name = stat.name;
 
 		var stream = fs.createReadStream(filename, { start: LENGTH_HEADER });
@@ -533,6 +537,46 @@ FileStorage.prototype.read = function(id, fnCallback) {
 };
 
 /*
+	Get all file names
+	@fnCallback {Function} :: params: @err {Error}, @arr {String Array}
+	return {FileStorage}
+*/
+FileStorage.prototype.listing = function(fnCallback) {
+
+	var self = this;
+	var max = self._directory_index(self.options.index);
+	var directory = [];
+	var builder = [];
+
+	for (var i = 1; i < max; i++)
+		directory.push(self._directory(i, true));
+
+	function config() {
+
+		var filename = directory.shift();
+
+		if (typeof(filename) === UNDEFINED) {
+			self.emit('listing', builder);
+			fnCallback(null, builder);
+			return;
+		}
+
+		fs.readFile(filename + FILENAME_DB, function(err, data) {
+
+			if (err) {
+				self.emit('error', err);
+			else
+				builder.push(data.toString('utf8'));
+
+			config();
+		});
+	}
+
+	config();
+	return self;
+};
+
+/*
 	Pipe a stream to Stream or HttpResponse
 	@id {String or Number}
 	@res {HttpResponse or Stream}
@@ -545,7 +589,7 @@ FileStorage.prototype.pipe = function(id, res, req, download) {
 	var self = this;
 	self.stat(id, function(err, stat, filename) {
 
-		var isResponse = typeof(res.writeHead) === 'undefined';
+		var isResponse = typeof(res.writeHead) === UNDEFINED;
 
 		if (err) {
 
