@@ -9,11 +9,11 @@ Storage for storing files
 - supports sending files via HTTP
 - supports file listing
 - supports changelog (insert, update, remove)
-- supports auto-pipe stream to response
+- __supports auto-pipe stream to response__
 - supports adding custom attribute to each file
 - supports file streaming via HTTP - Content Range
 - supports custom handler executing before saving file to the storage
-- __auto-read properties of picture: width and height__
+- __auto-read picture properties: width and height__
 - auto-create directories and the good logic
 - supports stat() and copy()
 - 100% pure JavaScript
