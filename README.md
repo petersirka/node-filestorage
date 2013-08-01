@@ -41,6 +41,12 @@ How to storage store files?
 
 var storage = require('filestorage').create('/path/to/directory/');
 
+// You can create more file storages
+// EXAMPLE:
+var storage_users = require('filestorage').create('/path/to/users/');
+var storage_products = require('filestorage').create('/path/to/products/');
+var storage_logs = require('filestorage').create('/path/to/logs/');
+
 // ================================================
 // FILESTORAGE INSERT
 // ================================================
