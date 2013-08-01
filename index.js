@@ -42,8 +42,8 @@ var PNG = 'image/png';
 var GIF = 'image/gif';
 var ENCODING = 'utf8';
 var NEWLINE = '\r\n';
-var BOUNDARY = '----' + Math.random().toString(16).substring(2);
 var NOTFOUND = 'File not found.';
+var BOUNDARY = '----' + Math.random().toString(16).substring(2);
 
 function FileStorage(path) {
 
@@ -52,7 +52,7 @@ function FileStorage(path) {
 	this.options = { index: 0, count: 0 };
 
 	this.verification();
-	this.onSave = function(filename, header, next) { next(); };
+	this.onPrepare = function(filename, header, next) { next(); };
 }
 
 FileStorage.prototype = new events.EventEmitter();
@@ -688,7 +688,7 @@ FileStorage.prototype.pipe = function(id, res, req, download) {
 		}
 
 		if (!isResponse) {
-			self.emit('pipe', id, stat, fs.createReadStream(filename, { start: LENGTH_HEADER }).pipe(res));
+			self.emit('pipe', id, stat, fs.createReadStream(filename, { start: LENGTH_HEADER }).pipe(res), req);
 			return;
 		}
 

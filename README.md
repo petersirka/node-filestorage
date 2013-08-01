@@ -303,6 +303,82 @@ storage.listing(function(err, arr) {
 
 ```
 
+```javascript
+
+// ================================================
+// FILESTORAGE PROPERTIES
+// ================================================
+
+// {String}, readonly
+storage.path;
+
+// {Object}, readonly
+storage.options;
+
+// ================================================
+// FILESTORAGE DELEGATES
+// ================================================
+
+//
+/*
+	Prepare file before store in storage
+	@filename {String} :: path to TEMPORARY FILE in a storage, this file will be replaced
+	@stat {Object}
+	@next {Function}
+*/
+storage.onPrepare = function(filename, stat, next) {
+
+	// stat.name        - file name
+	// stat.length      - file length
+	// stat.type        - content type
+	// stat.width       - picture width
+	// stat.height      - picture height
+	// stat.custom      - your custom value
+
+	next();
+};
+
+// ================================================
+// FILESTORAGE EVENTS
+// ================================================
+
+storage.on('error', function(err) {
+
+});
+
+storage.on('insert', function(id, stat) {
+
+});
+
+storage.on('update', function(id, stat) {
+
+});
+
+storage.on('remove', function(id) {
+
+});
+
+storage.on('send', function(id, stat, url) {
+
+});
+
+storage.on('copy', function(id, stat, stream, directory) {
+
+});
+
+storage.on('read', function(id, stat, stream) {
+
+});
+
+storage.on('listing', function(arr) {
+
+});
+
+storage.on('pipe', function(id, stat, stream, req) {
+
+});
+
+```
 ***
 
 ## The MIT License
