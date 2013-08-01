@@ -19,7 +19,7 @@ Storage for storing files
 - supports stat() and copy()
 - 100% pure JavaScript
 - MIT license
-- Example via partial.js: https://github.com/petersirka/partial.js/tree/master/examples/upload-multipart-filestorage
+- [Example: Picture uploader via partial.js](https://github.com/petersirka/partial.js/tree/master/examples/upload-multipart-filestorage)
 
 
 How to storage store files?
