@@ -35,6 +35,8 @@ var FILENAME_CHANGELOG = 'changelog.log';
 var EXTENSION = '.data';
 var EXTENSION_TMP = '.tmp';
 var UNDEFINED = 'undefined';
+var STRING = 'string';
+var BOOLEAN = 'boolean';
 var JPEG = 'image/jpeg';
 var PNG = 'image/png';
 var GIF = 'image/gif';
@@ -312,7 +314,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 		custom: custom
 	};
 
-	if (typeof(buffer) === 'string') {
+	if (typeof(buffer) === STRING) {
 		if (buffer.length % 4 === 0 && buffer.match(/^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/) !== null)
 			buffer = new Buffer(buffer, 'base64');
 		else
@@ -386,7 +388,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	@custom {String, Object} :: optional
 	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
 	@change {String} :: optional, changelog
-	return {FileStorage}
+	return {Number}
 */
 FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback, change) {
 	return this.insert(name, buffer, custom, fnCallback, change, id);
@@ -405,6 +407,12 @@ FileStorage.prototype.remove = function(id, fnCallback, change) {
 	var index = utils.parseIndex(id.toString());
 	var directory = self._directory(index);
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0') + EXTENSION;
+
+	if (typeof(fnCallback) === STRING) {
+		var tmp = change;
+		change = fnCallback;
+		fnCallback = tmp;
+	}
 
 	if (change)
 		self._append_changelog(index, change);
@@ -456,7 +464,7 @@ FileStorage.prototype.stat = function(id, fnCallback) {
 };
 
 /*
-	Send a file
+	Send a file through HTTP
 	@id {String or Number}
 	@url {String}
 	@fnCallback {Function} :: optional, params: @err {Error}, @response {String}
@@ -532,7 +540,7 @@ FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 };
 
 /*
-	Copy
+	Copy file
 	@id {String or Number}
 	@directory {String}
 	@fnCallback {Function} :: params: @err {Error}
@@ -542,6 +550,13 @@ FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 
 	var self = this;
+
+	if (typeof(fnCallback) === STRING) {
+		var tmp = name;
+		name = fnCallback;
+		fnCallback = tmp;
+	}
+
 	self.stat(id, function(err, stat, filename) {
 
 		if (err) {
@@ -648,6 +663,14 @@ FileStorage.prototype.listing = function(fnCallback) {
 FileStorage.prototype.pipe = function(id, res, req, download) {
 
 	var self = this;
+	var type = typeof(req);
+
+	if (type === BOOLEAN || type === STRING) {
+		var tmp = download;
+		download = req;
+		req = tmp;
+	}
+
 	self.stat(id, function(err, stat, filename) {
 
 		var isResponse = typeof(res.writeHead) === UNDEFINED;
@@ -718,7 +741,7 @@ FileStorage.prototype.pipe = function(id, res, req, download) {
 						'Vary': 'Accept-Encoding'
 					};
 
-		if (typeof(download) === 'string')
+		if (typeof(download) === STRING)
 			headers['Content-Disposition'] = 'attachment; filename=' + download;
 		else if (download === true)
 			headers['Content-Disposition'] = 'attachment; filename=' + stat.name;

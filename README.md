@@ -19,6 +19,20 @@ Storage for storing files
 - 100% pure JavaScript
 - MIT license
 
+
+How to storage store files?
+---------------------------
+
+> Directory contains max 1000 files. Each file has .data extension and each file contains internal META information (2 kB). Each directory contains the config file with information about all files.
+
+/your-path/000-000-001/000000001.data
+
+> if directory contains more than 999 files then storage automatically create a new directory:
+
+/your-path/000-000-002/000001000.data
+
+> You still quiering by the file ID {Number}
+
 ***
 
 ```javascript
@@ -76,7 +90,6 @@ console.log(id);
 // FILESTORAGE UPDATE
 // ================================================
 
-
 /*
 	Update a file
 	@id {String or Number}
@@ -85,7 +98,7 @@ console.log(id);
 	@custom {String, Object} :: optional
 	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
 	@change {String} :: optional, changelog
-	return {FileStorage}
+	return {Number}
 */
 storage.update(id, name, buffer, [custom], [fnCallback], [change]);
 
@@ -103,6 +116,186 @@ storage.update(1, 'logo.jpg', '/users/petersirka/desktop/logo.jpg', function(err
 	// stat.height      - picture height
 	// stat.custom      - your custom value
 	// stat.stamp       - date created ticks, new Date(stat.stamp)
+
+}, 'update logo');
+
+// OR
+
+storage.update(1, 'plaintext.txt', new Buffer('YW55IGNhcm5hbCBwbGVhc3VyZS4=', 'base64'));
+
+// ================================================
+// FILESTORAGE REMOVE
+// ================================================
+
+/*
+	Remove a file
+	@id {String or Number}
+	@fnCallback {Function} :: optional, params: @err {Error}
+	@change {String} :: optional, changelog
+	return {FileStorage}
+*/
+storage.remove(id, [fnCallback], [change]);
+
+// EXAMPLE:
+
+storage.remove(1, function(err) {
+
+	// your code here
+
+}, 'remove logo');
+
+// OR
+
+storage.remove(1);
+
+// ================================================
+// FILESTORAGE STAT
+// ================================================
+
+/*
+	A file information
+	@id {String or Number}
+	@fnCallback {Function} :: params: @err {Error}, @stat {Object}
+	return {FileStorage}
+*/
+storage.stat(id, fnCallback);
+
+// EXAMPLE:
+
+storage.stat(1, function(err, stat) {
+
+	// stat.name        - file name
+	// stat.length      - file length
+	// stat.type        - content type
+	// stat.width       - picture width
+	// stat.height      - picture height
+	// stat.custom      - your custom value
+	// stat.stamp       - date created ticks, new Date(stat.stamp)
+
+});
+
+// ================================================
+// FILESTORAGE READ
+// ================================================
+
+/*
+	Read a file
+	@id {String or Number}
+	@fnCallback {Function} :: params: @err {Error}, @stream {ReadStream}, @stat {Object}
+	return {FileStorage}
+*/
+storage.read(id, fnCallback);
+
+// EXAMPLE:
+
+storage.read(1, function(err, stream, stat) {
+
+	// stat.name        - file name
+	// stat.length      - file length
+	// stat.type        - content type
+	// stat.width       - picture width
+	// stat.height      - picture height
+	// stat.custom      - your custom value
+	// stat.stamp       - date created ticks, new Date(stat.stamp)
+
+	// stream.pipe(yourstream)
+
+});
+
+// ================================================
+// FILESTORAGE PIPE
+// ================================================
+
+/*
+	Pipe a stream to Stream or HttpResponse
+	@id {String or Number}
+	@res {HttpResponse or Stream}
+	@req {HttpRequest} :: optional,
+	@download {String or Boolean} :: optional, attachment - if string filename is download else if boolean filename will a stat.name
+	return {FileStorage}
+*/
+storage.pipe(id, res, req, download);
+
+// EXAMPLE:
+
+storage.pipe(1, response, request, true);
+
+// OR
+
+storage.pipe(1, response, request, 'mynewlogo.jpg');
+
+// OR
+
+storage.pipe(1, mystream);
+
+// ================================================
+// FILESTORAGE SEND
+// ================================================
+
+/*
+	Send a file through HTTP
+	@id {String or Number}
+	@url {String}
+	@fnCallback {Function} :: optional, params: @err {Error}, @response {String}
+	@headers {Object} :: optional, additional headers
+	return {FileStorage}
+*/
+storage.send(id, url, [fnCallback], [headers]);
+
+// EXAMPLE:
+
+// <form method="POST" action="http://yoururladdress.com/upload/" enctype="multipart/form-data">
+// <input type="file" name="File" />
+
+storage.send(1, 'http://yoururladdress.com/upload/', function(err, response) {
+
+	if (!err)
+		console.log(response);
+
+});
+
+storage.send(1, 'http://yoururladdress.com/upload/');
+
+// ================================================
+// FILESTORAGE COPY
+// ================================================
+
+/*
+	Copy file
+	@id {String or Number}
+	@directory {String}
+	@fnCallback {Function} :: params: @err {Error}
+	@name {String} :: optional, new filename
+	return {FileStorage}
+*/
+storage.copy(id, directory, [fnCallback], [name]);
+
+// EXAMPLE:
+
+storage.copy(1, '/users/petersirka/desktop/');
+storage.copy(1, '/users/petersirka/desktop/', 'mynewlogofromstorage.jpg');
+
+storage.copy(1, '/users/petersirka/desktop/', function(err) {
+
+});
+
+// ================================================
+// FILESTORAGE LISTING
+// ================================================
+
+/*
+	Get all file names
+	@fnCallback {Function} :: params: @err {Error}, @arr {String Array}
+	return {FileStorage}
+*/
+storage.listing(fnCallback);
+
+// EXAMPLE:
+
+storage.listing(function(err, arr) {
+
+	// Array contains JSON strings (not parsed)
+	console.log(arr);
 
 });
 
