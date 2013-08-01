@@ -404,6 +404,19 @@ FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback, ch
 FileStorage.prototype.remove = function(id, fnCallback, change) {
 
 	var self = this;
+
+	if (id === 'change' || id === 'changelog') {
+
+		fs.unlink(path.join(self.path, FILENAME_CHANGELOG), function(err) {
+
+			if (fnCallback)
+				fnCallback(err);
+
+		});
+
+		return self;
+	}
+
 	var index = utils.parseIndex(id.toString());
 	var directory = self._directory(index);
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0') + EXTENSION;
@@ -760,6 +773,35 @@ FileStorage.prototype.pipe = function(id, res, req, download) {
 		res.writeHead(isRange ? 206 : 200, headers);
 		self.emit('pipe', id, stat, fs.createReadStream(filename, options).pipe(res));
 
+	});
+
+	return self;
+};
+
+/*
+	Read the changelog
+	@fnCallback {Function} :: params: @err {Error}, @changes {String Array}
+	return {FileStorage}
+*/
+FileStorage.prototype.changelog = function(fnCallback) {
+
+	var self = this;
+	var stream = fs.createReadStream(path.join(self.path, FILENAME_CHANGELOG));
+
+	stream._changedata = '';
+
+	stream.on('data', function(chunk) {
+		this._changedata += chunk.toString('utf8');
+	});
+
+	stream.on('error', function(err) {
+		fnCallback(err, null);
+	});
+
+	stream.on('end', function() {
+		var data = this._changedata.split('\n');
+		self.emit('changelog', data);
+		fnCallback(null, data);
 	});
 
 	return self;

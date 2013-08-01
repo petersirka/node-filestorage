@@ -301,6 +301,27 @@ storage.listing(function(err, arr) {
 
 });
 
+// ================================================
+// FILESTORAGE CHANGELOG
+// ================================================
+
+/*
+	Read the changelog
+	@fnCallback {Function} :: params: @err {Error}, @changes {String Array}
+	return {FileStorage}
+*/
+storage.changelog(fnCallback);
+
+// EXAMPLE:
+
+storage.changelog(function(err, changes) {
+	console.log(changes);
+});
+
+// HOW TO REMOVE CHANGELOG?
+
+storage.remove('changelog');
+
 ```
 
 ```javascript
@@ -370,11 +391,15 @@ storage.on('read', function(id, stat, stream) {
 
 });
 
+storage.on('pipe', function(id, stat, stream, req) {
+
+});
+
 storage.on('listing', function(arr) {
 
 });
 
-storage.on('pipe', function(id, stat, stream, req) {
+storage.on('changelog', function(arr) {
 
 });
 
