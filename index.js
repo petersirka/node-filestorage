@@ -45,9 +45,9 @@ var NEWLINE = '\r\n';
 var NOTFOUND = 'File not found.';
 var BOUNDARY = '----' + Math.random().toString(16).substring(2);
 
-function FileStorage(path) {
+function FileStorage(directory) {
 
-	this.path = path;
+	this.path = directory || path.join(path.dirname(process.argv[1]), 'storage');
 	this.cache = {};
 	this.options = { index: 0, count: 0 };
 

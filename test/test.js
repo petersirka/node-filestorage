@@ -1,5 +1,6 @@
 var FileStorage = require('../index');
 var filestorage = FileStorage.create('/users/petersirka/desktop/filestorage/');
+var filestorage = FileStorage.create();
 
 /*
 filestorage.listing(function(err, data) {
