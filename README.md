@@ -13,7 +13,7 @@ Storage for storing files
 - supports adding custom attribute to each file
 - supports file streaming via HTTP - Content Range
 - supports custom handler executing before saving file to the storage
-- auto-read properties of picture: width and height
+- __auto-read properties of picture: width and height__
 - auto-create directories and the good logic
 - supports stat() and copy()
 - 100% pure JavaScript
@@ -46,6 +46,11 @@ var storage = require('filestorage').create('/path/to/directory/');
 var storage_users = require('filestorage').create('/path/to/users/');
 var storage_products = require('filestorage').create('/path/to/products/');
 var storage_logs = require('filestorage').create('/path/to/logs/');
+
+
+var storage_default = require('filestorage').create();
+
+// default path: /process–directory/filestorage/
 
 // ================================================
 // FILESTORAGE INSERT

@@ -47,7 +47,7 @@ var BOUNDARY = '----' + Math.random().toString(16).substring(2);
 
 function FileStorage(directory) {
 
-	this.path = directory || path.join(path.dirname(process.argv[1]), 'storage');
+	this.path = (directory || path.join(path.dirname(process.argv[1]), 'filestorage')).replace(/\\/g, '/');
 	this.cache = {};
 	this.options = { index: 0, count: 0 };
 
@@ -318,7 +318,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 		if (buffer.length % 4 === 0 && buffer.match(/^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/) !== null)
 			buffer = new Buffer(buffer, 'base64');
 		else
-			buffer = fs.createReadStream(buffer);
+			buffer = fs.createReadStream(buffer.replace(/\\/g, '/'));
 	}
 
 	var isBuffer = typeof(stream.pipe) === UNDEFINED;
