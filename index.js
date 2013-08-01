@@ -187,7 +187,7 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 
 	var self = this;
 
-	self.onSave(filename + EXTENSION_TMP, header, function() {
+	self.onPrepare(filename + EXTENSION_TMP, header, function() {
 
 		fs.stat(filename +  EXTENSION_TMP, function(err, stats) {
 
@@ -276,6 +276,13 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	var self = this;
 	var options = self.options;
 
+	if (typeof(buffer) === UNDEFINED) {
+		var customError = new Error('Buffer is undefined.');
+		self.emit('error', customError);
+		fnCallback(customError, null, null);
+		return;
+	}
+
 	if (typeof(custom) === 'function') {
 		change = fnCallback;
 		fnCallback = custom;
@@ -300,14 +307,18 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 
 	self._mkdir(directory, true);
 
+	name = path.basename(name);
+
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0');
 	var stream = fs.createWriteStream(filename + EXTENSION_TMP);
 
 	self._save();
 
+	var ext = utils.extension(name);
 	var header = {
 		name: name,
-		type: utils.contentType(name),
+		extension: ext,
+		type: utils.contentType(ext),
 		width: 0,
 		height: 0,
 		length: 0,
@@ -655,7 +666,7 @@ FileStorage.prototype.listing = function(fnCallback) {
 			if (err)
 				self.emit('error', err);
 			else
-				builder.push(data.toString('utf8'));
+				builder.push(data.toString('utf8').trim());
 
 			config();
 		});

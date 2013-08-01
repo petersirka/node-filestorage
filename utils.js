@@ -52,12 +52,18 @@ if (typeof(setImmediate) === UNDEFINED) {
 	};
 }
 
-exports.contentType = function(ext) {
-
-	var index = ext.lastIndexOf('.');
+exports.extension = function(name) {
+	var index = name.lastIndexOf('.');
 
 	if (index !== -1)
-		ext = ext.substring(index + 1);
+		name = name.substring(index + 1);
+
+	return name;
+};
+
+exports.contentType = function(ext) {
+
+	ext = exports.extension(ext);
 
 	var extension = {
 		'ai': 'application/postscript',
@@ -249,6 +255,12 @@ if (!String.prototype.padRight) {
 	String.prototype.padRight = function(max, c) {
 		var self = this.toString();
 		return self + new Array(Math.max(0, max - self.length + 1)).join(c || ' ');
+	};
+}
+
+if (!String.prototype.trim) {
+	String.prototype.trim = function() {
+		return this.replace(/^[\s]+|[\s]+$/g, '');
 	};
 }
 

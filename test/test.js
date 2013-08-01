@@ -1,5 +1,5 @@
 var FileStorage = require('../index');
-var filestorage = FileStorage.create('/users/petersirka/desktop/filestorage/');
+//var filestorage = FileStorage.create('/users/petersirka/desktop/filestorage/');
 var filestorage = FileStorage.create();
 
 /*
@@ -12,7 +12,7 @@ filestorage.stat(1, function(err, stat) {
 });
 */
 
-//filestorage.insert('favicon.png', '/users/petersirka/desktop/favicon.png');
+//filestorage.insert('/users/petersirka/desktop/favicon.png', '/users/petersirka/desktop/favicon.png');
 //filestorage.insert('logo.png', '/users/petersirka/desktop/logo.png');
 //filestorage.insert('aaaa.gif', '/users/petersirka/desktop/aaaa.gif');
 //filestorage.insert('6551260034.pdf', '/users/petersirka/desktop/6551260034.pdf');

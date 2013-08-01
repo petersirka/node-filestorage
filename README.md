@@ -10,6 +10,7 @@ Storage for storing files
 - supports file listing
 - supports changelog (insert, update, remove)
 - __supports auto-pipe stream to response__
+- __supports auto HTTP CACHING (via ETag)__
 - supports adding custom attribute to each file
 - supports file streaming via HTTP - Content Range
 - supports custom handler executing before saving file to the storage
@@ -18,6 +19,7 @@ Storage for storing files
 - supports stat() and copy()
 - 100% pure JavaScript
 - MIT license
+
 
 
 How to storage store files?
@@ -75,6 +77,7 @@ storage.insert('logo.png', '/users/petersirka/desktop/logo.png', 'my custom data
 	console.log(stat);
 
 	// stat.name        - file name
+	// stat.extension   - file extension
 	// stat.length      - file length
 	// stat.type        - content type
 	// stat.width       - picture width
@@ -123,6 +126,7 @@ storage.update(1, 'logo.jpg', '/users/petersirka/desktop/logo.jpg', function(err
 	console.log(stat);
 
 	// stat.name        - file name
+	// stat.extension   - file extension
 	// stat.length      - file length
 	// stat.type        - content type
 	// stat.width       - picture width
@@ -178,6 +182,7 @@ storage.stat(id, fnCallback);
 storage.stat(1, function(err, stat) {
 
 	// stat.name        - file name
+	// stat.extension   - file extension
 	// stat.length      - file length
 	// stat.type        - content type
 	// stat.width       - picture width
@@ -204,6 +209,7 @@ storage.read(id, fnCallback);
 storage.read(1, function(err, stream, stat) {
 
 	// stat.name        - file name
+	// stat.extension   - file extension
 	// stat.length      - file length
 	// stat.type        - content type
 	// stat.width       - picture width
@@ -361,6 +367,7 @@ storage.options;
 storage.onPrepare = function(filename, stat, next) {
 
 	// stat.name        - file name
+	// stat.extension   - file extension
 	// stat.length      - file length
 	// stat.type        - content type
 	// stat.width       - picture width
