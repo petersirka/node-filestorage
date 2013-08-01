@@ -23,7 +23,7 @@ Storage for storing files
 How to storage store files?
 ---------------------------
 
-> Directory contains max 1000 files. Each file has .data extension and each file contains internal META information (2 kB). Each directory contains the config file with information about all files.
+> Directory contains max 1000 files. Each file has .data extension and each file contains internal META information (2 kB). Each directory contains the config file with the informations about all files.
 
 /your-path/000-000-001/000000001.data
 
@@ -31,9 +31,11 @@ How to storage store files?
 
 /your-path/000-000-002/000001000.data
 
-> You still quiering by the file ID {Number}
+> Big benefit: querying by the file ID {Number}
+
 
 ***
+
 
 ```javascript
 
