@@ -63,8 +63,6 @@ exports.extension = function(name) {
 
 exports.contentType = function(ext) {
 
-	ext = exports.extension(ext);
-
 	var extension = {
 		'ai': 'application/postscript',
 		'aif': 'audio/x-aiff',
