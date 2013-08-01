@@ -31,7 +31,7 @@ How to storage store files?
 
 /your-path/000-000-002/000001000.data
 
-> Big benefit: querying by the file ID {Number}
+> The benefit: querying by the file ID {Number} and auto-pipe to HttpResponse
 
 
 ***
