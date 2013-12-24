@@ -332,7 +332,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 			buffer = fs.createReadStream(buffer.replace(/\\/g, '/'));
 	}
 
-	var isBuffer = typeof(stream.pipe) === UNDEFINED;
+	var isBuffer = typeof(buffer.pipe) === UNDEFINED;
 
 	if (isBuffer) {
 
@@ -354,39 +354,36 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 
 		stream.end(buffer);
 		self._writeHeader(index, filename, header, fnCallback, eventname, directory);
-
+		return index;
 	}
-	else {
 
-		buffer.pipe(stream);
+	buffer.pipe(stream);
 
-		if (header.type === JPEG || header.type === PNG || header.type === GIF) {
-			buffer.once('data', function(chunk) {
+	if (header.type === JPEG || header.type === PNG || header.type === GIF) {
+		buffer.once('data', function(chunk) {
 
-				var size;
+			var size;
 
-				if (header.type === JPEG) {
-					size = utils.dimensionJPG(chunk);
-					header.width = size.width;
-					header.height = size.height;
-				} else if (header.type === PNG) {
-					size = utils.dimensionPNG(chunk);
-					header.width = size.width;
-					header.height = size.height;
-				} else if (header.type === GIF) {
-					size = utils.dimensionGIF(chunk);
-					header.width = size.width;
-					header.height = size.height;
-				}
+			if (header.type === JPEG) {
+				size = utils.dimensionJPG(chunk);
+				header.width = size.width;
+				header.height = size.height;
+			} else if (header.type === PNG) {
+				size = utils.dimensionPNG(chunk);
+				header.width = size.width;
+				header.height = size.height;
+			} else if (header.type === GIF) {
+				size = utils.dimensionGIF(chunk);
+				header.width = size.width;
+				header.height = size.height;
+			}
 
-			});
-		}
-
-		buffer.on('end', function() {
-			self._writeHeader(index, filename, header, fnCallback, eventname, directory);
 		});
-
 	}
+
+	buffer.on('end', function() {
+		self._writeHeader(index, filename, header, fnCallback, eventname, directory);
+	});
 
 	return index;
 };
@@ -679,12 +676,12 @@ FileStorage.prototype.listing = function(fnCallback) {
 /*
 	Pipe a stream to Stream or HttpResponse
 	@id {String or Number}
+	@req {HttpRequest} :: optional
 	@res {HttpResponse or Stream}
-	@req {HttpRequest} :: optional,
 	@download {String or Boolean} :: optional, attachment - if string filename is download else if boolean filename will a stat.name
 	return {FileStorage}
 */
-FileStorage.prototype.pipe = function(id, res, req, download) {
+FileStorage.prototype.pipe = function(id, req, res, download) {
 
 	var self = this;
 	var type = typeof(req);

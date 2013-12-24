@@ -228,12 +228,12 @@ storage.read(1, function(err, stream, stat) {
 /*
 	Pipe a stream to Stream or HttpResponse
 	@id {String or Number}
-	@res {HttpResponse or Stream}
 	@req {HttpRequest} :: optional,
+	@res {HttpResponse or Stream}
 	@download {String or Boolean} :: optional, attachment - if string filename is download else if boolean filename will a stat.name
 	return {FileStorage}
 */
-storage.pipe(id, res, req, download);
+storage.pipe(id, req, res, download);
 
 // EXAMPLE:
 
