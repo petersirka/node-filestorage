@@ -754,6 +754,11 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 						'Vary': 'Accept-Encoding'
 					};
 
+		if (stat.width > 0)
+			headers['X-Image-Width'] = stat.width;
+		if (stat.height > 0)
+			headers['X-Image-Height'] = stat.height;
+
 		if (typeof(download) === STRING)
 			headers['Content-Disposition'] = 'attachment; filename=' + download;
 		else if (download === true)
