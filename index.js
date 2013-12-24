@@ -42,7 +42,7 @@ var PNG = 'image/png';
 var GIF = 'image/gif';
 var ENCODING = 'utf8';
 var NEWLINE = '\r\n';
-var NOTFOUND = 'File not found.';
+var NOTFOUND = '404: File not found.';
 var BOUNDARY = '----' + Math.random().toString(16).substring(2);
 
 function FileStorage(directory) {
@@ -692,9 +692,8 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 		req = tmp;
 	}
 
+	var isResponse = typeof(res.writeHead) !== UNDEFINED;
 	self.stat(id, function(err, stat, filename) {
-
-		var isResponse = typeof(res.writeHead) === UNDEFINED;
 
 		if (err) {
 
