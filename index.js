@@ -684,13 +684,6 @@ FileStorage.prototype.listing = function(fnCallback) {
 FileStorage.prototype.pipe = function(id, req, res, download) {
 
 	var self = this;
-	var type = typeof(req);
-
-	if (type === BOOLEAN || type === STRING) {
-		var tmp = download;
-		download = req;
-		req = tmp;
-	}
 
 	var isResponse = typeof(res.writeHead) !== UNDEFINED;
 	self.stat(id, function(err, stat, filename) {
