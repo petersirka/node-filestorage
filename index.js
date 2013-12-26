@@ -196,12 +196,12 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 
 			header.stamp = new Date().getTime();
 
-			var json = JSON.stringify(header);
-			json += new Array((LENGTH_HEADER - json.length) + 1).join(' ');
+			var json = new Buffer(LENGTH_HEADER);
+			json.fill(' ');
+			json.write(JSON.stringify(header));
 
 			var stream = fs.createWriteStream(filename + EXTENSION);
-
-			stream.write(json);
+			stream.write(json, 'binary');
 
 			var read = fs.createReadStream(filename + EXTENSION_TMP);
 			read.pipe(stream);
@@ -465,7 +465,6 @@ FileStorage.prototype.remove = function(id, fnCallback, change) {
 FileStorage.prototype.stat = function(id, fnCallback) {
 
 	var self = this;
-
 	var index = utils.parseIndex(id.toString());
 	var directory = self._directory(index);
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0') + EXTENSION;
@@ -473,7 +472,7 @@ FileStorage.prototype.stat = function(id, fnCallback) {
 	var stream = fs.createReadStream(filename, { start: 0, end: LENGTH_HEADER - 1 });
 
 	stream.once('data', function(chunk) {
-		fnCallback(null, JSON.parse(chunk.toString(ENCODING)), filename);
+		fnCallback(null, JSON.parse(new Buffer(chunk, 'binary').toString(ENCODING).replace(/^[\s]+|[\s]+$/g, '')), filename);
 	});
 
 	stream.once('error', function(err) {
