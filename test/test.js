@@ -15,14 +15,16 @@ filestorage.stat(1, function(err, stat) {
 });
 */
 
+/*
 setTimeout(function() {
 	filestorage.read(1, function(err, stream, info) {
 		stream.pipe(fs.createWriteStream('/users/petersirka/desktop/aaa.jpg'));
 	});
 }, 100);
+*/
 
 // console.log(filestorage.insert('čťčščšĎť.jpg', '/users/petersirka/desktop/levik-anna-maria.jpg'));
-//filestorage.insert('logo.png', '/users/petersirka/desktop/logo.png');
+filestorage.insert('logo.png', '/users/petersirka/desktop/logo.png');
 //filestorage.insert('aaaa.gif', '/users/petersirka/desktop/aaaa.gif');
 //filestorage.insert('6551260034.pdf', '/users/petersirka/desktop/6551260034.pdf');
 //filestorage.update(2, 'smadny-mnich.jpg', '/users/petersirka/desktop/smadny-mnich.jpg', { key: 'value' });

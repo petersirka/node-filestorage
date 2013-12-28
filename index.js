@@ -55,7 +55,12 @@ function FileStorage(directory) {
 	this.onPrepare = function(filename, header, next) { next(); };
 }
 
-FileStorage.prototype = new events.EventEmitter();
+FileStorage.prototype.__proto__ = Object.create(events.EventEmitter.prototype, {
+	constructor: {
+		value: FileStorage,
+		enumberable: false
+	}
+});
 
 FileStorage.prototype.verification = function() {
 

@@ -237,11 +237,11 @@ storage.pipe(id, req, res, download);
 
 // EXAMPLE:
 
-storage.pipe(1, response, request, true);
+storage.pipe(1, request, response, true);
 
 // OR
 
-storage.pipe(1, response, request, 'mynewlogo.jpg');
+storage.pipe(1, request, response, 'mynewlogo.jpg');
 
 // OR
 
