@@ -764,9 +764,9 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 			headers['X-Image-Height'] = stat.height;
 
 		if (typeof(download) === STRING)
-			headers['Content-Disposition'] = 'attachment; filename=' + download;
+			headers['Content-Disposition'] = 'attachment; filename=' + encodeURIComponent(download);
 		else if (download === true)
-			headers['Content-Disposition'] = 'attachment; filename=' + stat.name;
+			headers['Content-Disposition'] = 'attachment; filename=' + encodeURIComponent(stat.name);
 
 		var options = { start: LENGTH_HEADER };
 
