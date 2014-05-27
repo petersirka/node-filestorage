@@ -1,7 +1,7 @@
 Storage for storing files
 =========================
 
-- Best use with [www.partialjs.com](http://partialjs.com)
+- Best use with [www.totaljs.com](http://www.totaljs.com)
 - perfect solution for web sites
 - supports custom path
 - supports insert, update and remove files
@@ -19,7 +19,7 @@ Storage for storing files
 - supports stat() and copy()
 - 100% pure JavaScript
 - MIT license
-- [Example: Picture uploader via partial.js](https://github.com/petersirka/partial.js/tree/master/examples/upload-multipart-filestorage)
+- [Example: Picture uploader via total.js](https://github.com/totaljs/examples/tree/master/upload-multipart-filestorage)
 
 
 How to storage store files?

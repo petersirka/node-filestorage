@@ -1,9 +1,9 @@
 {
     "name": "filestorage",
-    "version": "1.0.6",
+    "version": "1.0.7",
     "description": "File storage for file uploading.",
     "main": "./index.js",
-    "keywords": [ "filestorage", "storage", "file", "web", "partial", "express", "stream", "upload"],
+    "keywords": ["filestorage", "storage", "file", "web", "partial", "express", "stream", "upload"],
     "engines": {
         "node": "*"
     },
