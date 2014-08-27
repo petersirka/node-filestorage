@@ -668,6 +668,7 @@ FileStorage.prototype.read = function(id, fnCallback) {
         var stream = fs.createReadStream(filename, {
             start: LENGTH_HEADER
         });
+
         self.emit('read', id, stat, stream);
         fnCallback(null, stream, stat);
 
@@ -728,7 +729,7 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 
     var self = this;
 
-    var isResponse = typeof(res.writeHead) !== UNDEFINED;
+    var isResponse = res && res.writeHead !== undefined;
     self.stat(id, function(err, stat, filename) {
 
         if (err) {
@@ -748,7 +749,7 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
         if (!isResponse) {
             self.emit('pipe', id, stat, fs.createReadStream(filename, {
                 start: LENGTH_HEADER
-            }).pipe(res), req);
+            }).pipe(req), req);
             return;
         }
 
