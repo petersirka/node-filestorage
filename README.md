@@ -436,4 +436,4 @@ THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ## Contact
 
-[www.petersirka.sk](http://www.petersirka.sk) - <petersirka@gmail.com>
+<http://about.me/petersirka> - <petersirka@gmail.com>

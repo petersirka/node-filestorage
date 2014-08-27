@@ -1,24 +1,3 @@
-// Copyright Peter Širka, Web Site Design s.r.o. (www.petersirka.sk)
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
 var fs = require('fs');
 var util = require('util');
 var path = require('path');
@@ -276,13 +255,13 @@ FileStorage.prototype._mkdir = function(directory, noPath) {
 };
 
 /*
-	Insert a file
-	@name {String}
-	@buffer {String, Stream, Buffer}
-	@custom {String, Object} :: optional
-	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
-	@change {String} :: optional, changelog
-	return {Number} :: file id
+    Insert a file
+    @name {String}
+    @buffer {String, Stream, Buffer}
+    @custom {String, Object} :: optional
+    @fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
+    @change {String} :: optional, changelog
+    return {Number} :: file id
 */
 FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change, id) {
 
@@ -422,25 +401,25 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 };
 
 /*
-	Update a file
-	@id {String or Number}
-	@name {String}
-	@buffer {String, Stream, Buffer}
-	@custom {String, Object} :: optional
-	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
-	@change {String} :: optional, changelog
-	return {Number}
+    Update a file
+    @id {String or Number}
+    @name {String}
+    @buffer {String, Stream, Buffer}
+    @custom {String, Object} :: optional
+    @fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
+    @change {String} :: optional, changelog
+    return {Number}
 */
 FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback, change) {
     return this.insert(name, buffer, custom, fnCallback, change, id);
 };
 
 /*
-	Remove a file
-	@id {String or Number}
-	@fnCallback {Function} :: optional, params: @err {Error}
-	@change {String} :: optional, changelog
-	return {FileStorage}
+    Remove a file
+    @id {String or Number}
+    @fnCallback {Function} :: optional, params: @err {Error}
+    @change {String} :: optional, changelog
+    return {FileStorage}
 */
 FileStorage.prototype.remove = function(id, fnCallback, change) {
 
@@ -490,10 +469,10 @@ FileStorage.prototype.remove = function(id, fnCallback, change) {
 };
 
 /*
-	A file information
-	@id {String or Number}
-	@fnCallback {Function} :: params: @err {Error}, @stat {Object}
-	return {FileStorage}
+    A file information
+    @id {String or Number}
+    @fnCallback {Function} :: params: @err {Error}, @stat {Object}
+    return {FileStorage}
 */
 FileStorage.prototype.stat = function(id, fnCallback) {
 
@@ -520,12 +499,12 @@ FileStorage.prototype.stat = function(id, fnCallback) {
 };
 
 /*
-	Send a file through HTTP
-	@id {String or Number}
-	@url {String}
-	@fnCallback {Function} :: optional, params: @err {Error}, @response {String}
-	@headers {Object} :: optional, additional headers
-	return {FileStorage}
+    Send a file through HTTP
+    @id {String or Number}
+    @url {String}
+    @fnCallback {Function} :: optional, params: @err {Error}, @response {String}
+    @headers {Object} :: optional, additional headers
+    return {FileStorage}
 */
 FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 
@@ -600,12 +579,12 @@ FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 };
 
 /*
-	Copy file
-	@id {String or Number}
-	@directory {String}
-	@fnCallback {Function} :: params: @err {Error}
-	@name {String} :: optional, new filename
-	return {FileStorage}
+    Copy file
+    @id {String or Number}
+    @directory {String}
+    @fnCallback {Function} :: params: @err {Error}
+    @name {String} :: optional, new filename
+    return {FileStorage}
 */
 FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 
@@ -648,10 +627,10 @@ FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 };
 
 /*
-	Read a file
-	@id {String or Number}
-	@fnCallback {Function} :: params: @err {Error}, @stream {ReadStream}, @stat {Object}
-	return {FileStorage}
+    Read a file
+    @id {String or Number}
+    @fnCallback {Function} :: params: @err {Error}, @stream {ReadStream}, @stat {Object}
+    return {FileStorage}
 */
 FileStorage.prototype.read = function(id, fnCallback) {
 
@@ -678,9 +657,9 @@ FileStorage.prototype.read = function(id, fnCallback) {
 };
 
 /*
-	Get all file names
-	@fnCallback {Function} :: params: @err {Error}, @arr {String Array}
-	return {FileStorage}
+    Get all file names
+    @fnCallback {Function} :: params: @err {Error}, @arr {String Array}
+    return {FileStorage}
 */
 FileStorage.prototype.listing = function(fnCallback) {
 
@@ -718,12 +697,12 @@ FileStorage.prototype.listing = function(fnCallback) {
 };
 
 /*
-	Pipe a stream to Stream or HttpResponse
-	@id {String or Number}
-	@req {HttpRequest} :: optional
-	@res {HttpResponse or Stream}
-	@download {String or Boolean} :: optional, attachment - if string filename is download else if boolean filename will a stat.name
-	return {FileStorage}
+    Pipe a stream to Stream or HttpResponse
+    @id {String or Number}
+    @req {HttpRequest} :: optional
+    @res {HttpResponse or Stream}
+    @download {String or Boolean} :: optional, attachment - if string filename is download else if boolean filename will a stat.name
+    return {FileStorage}
 */
 FileStorage.prototype.pipe = function(id, req, res, download) {
 
@@ -817,11 +796,20 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
             start: LENGTH_HEADER
         };
 
+        if (end === 0)
+            end = length - 1;
+
+        if (beg > end) {
+            beg = 0;
+            end = length - 1;
+        }
+
         if (beg > 0)
             options.start += beg;
 
         if (end > 0)
-            options.end = end;
+            options.end = end + options.start;
+
 
         if (beg > 0 || end > 0)
             headers['Content-Range'] = 'bytes ' + beg + '-' + end + '/' + stat.length;
@@ -835,9 +823,9 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 };
 
 /*
-	Read the changelog
-	@fnCallback {Function} :: params: @err {Error}, @changes {String Array}
-	return {FileStorage}
+    Read the changelog
+    @fnCallback {Function} :: params: @err {Error}, @changes {String Array}
+    return {FileStorage}
 */
 FileStorage.prototype.changelog = function(fnCallback) {
 
