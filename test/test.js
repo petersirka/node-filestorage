@@ -14,17 +14,22 @@ filestorage.stat(1, function(err, stat) {
 	console.log(err, stat);
 });
 */
-
+/*
+setTimeout(function() {
+    filestorage.pipe(1, fs.createWriteStream('/users/petersirka/desktop/output1.pdf'));
+}, 100);
+*/
 /*
 setTimeout(function() {
 	filestorage.read(1, function(err, stream, info) {
-		stream.pipe(fs.createWriteStream('/users/petersirka/desktop/aaa.jpg'));
+		stream.pipe(fs.createWriteStream('/users/petersirka/desktop/output2.pdf'));
 	});
 }, 100);
 */
 
+//filestorage.insert('invoice.pdf', '/users/petersirka/desktop/10_12.pdf');
 // console.log(filestorage.insert('čťčščšĎť.jpg', '/users/petersirka/desktop/levik-anna-maria.jpg'));
-filestorage.insert('logo.jpg', '/users/petersirka/desktop/DSC00325.JPG');
+//filestorage.insert('logo.jpg', '/users/petersirka/desktop/DSC00325.JPG');
 //filestorage.insert('aaaa.gif', '/users/petersirka/desktop/aaaa.gif');
 //filestorage.insert('6551260034.pdf', '/users/petersirka/desktop/6551260034.pdf');
 //console.log(filestorage.insert('aaa.jpg', new Buffer(fs.readFileSync('/users/petersirka/desktop/DSC00325.JPG'))));
