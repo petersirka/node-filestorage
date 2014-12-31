@@ -180,7 +180,6 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
     var self = this;
 
     self.onPrepare(filename + EXTENSION_TMP, header, function() {
-
         fs.stat(filename + EXTENSION_TMP, function(err, stats) {
 
             if (!err)
@@ -411,7 +410,39 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
     return {Number}
 */
 FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback, change) {
+    if (typeof(name) === 'function')
+        return this.update_header(id, name, buffer);
     return this.insert(name, buffer, custom, fnCallback, change, id);
+};
+
+/*
+    Change header informations
+    @id {String or Number}
+    @fnCallback {Function(err, header)} :: must return a new header.
+    return {Object}
+ */
+FileStorage.prototype.update_header = function(id, fnCallback, change) {
+
+    var self = this;
+    var index = utils.parseIndex(id);
+
+    if (change)
+        self._append_changelog(index, change);
+
+    self.stat(id, function(err, stat, filename) {
+        if (err)
+            return fnCallback(err, null);
+        var header = fnCallback(null, stat);
+        if (!header)
+            return;
+        var writer = fs.createWriteStream(filename, { start: 0, flags: 'r+' });
+        var json = new Buffer(LENGTH_HEADER);
+        json.fill(' ');
+        json.write(JSON.stringify(header));
+        writer.end(json);
+    });
+
+    return self;
 };
 
 /*
@@ -426,14 +457,10 @@ FileStorage.prototype.remove = function(id, fnCallback, change) {
     var self = this;
 
     if (id === 'change' || id === 'changelog') {
-
         fs.unlink(path.join(self.path, FILENAME_CHANGELOG), function(err) {
-
             if (fnCallback)
                 fnCallback(err);
-
         });
-
         return self;
     }
 
@@ -650,6 +677,25 @@ FileStorage.prototype.read = function(id, fnCallback) {
 
         self.emit('read', id, stat, stream);
         fnCallback(null, stream, stat);
+
+    });
+
+    return self;
+};
+
+FileStorage.prototype.read_header = function(id, fnCallback) {
+
+    var self = this;
+
+    self.stat(id, function(err, stat, filename) {
+
+        if (err) {
+            self.emit('error', err);
+            fnCallback(err, null);
+            return;
+        }
+
+
 
     });
 

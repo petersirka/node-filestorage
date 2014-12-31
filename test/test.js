@@ -27,7 +27,13 @@ setTimeout(function() {
 }, 100);
 */
 
-//filestorage.insert('invoice.pdf', '/users/petersirka/desktop/10_12.pdf');
+filestorage.update('1', function(err, header) {
+    header.name = 'invoice2.pdf'
+    return header;
+    //return null;
+});
+
+//filestorage.insert('invoice.pdf', '/users/petersirka/desktop/DATALAN logo CMYK 1+0.pdf');
 // console.log(filestorage.insert('čťčščšĎť.jpg', '/users/petersirka/desktop/levik-anna-maria.jpg'));
 //filestorage.insert('logo.jpg', '/users/petersirka/desktop/DSC00325.JPG');
 //filestorage.insert('aaaa.gif', '/users/petersirka/desktop/aaaa.gif');

@@ -140,6 +140,24 @@ storage.update(1, 'logo.jpg', '/users/petersirka/desktop/logo.jpg', function(err
 
 storage.update(1, 'plaintext.txt', new Buffer('YW55IGNhcm5hbCBwbGVhc3VyZS4=', 'base64'));
 
+/*
+	Update a file
+	@id {String or Number}
+	@fnCallback {Function(err, header)} ---> MUST RETURN A NEW HEADER
+	@change {String} :: optional, changelog
+	return {Number}
+*/
+storage.update(id, fnCallback, [change]);
+
+// EXAMPLE:
+
+storage.update(1, function(err, header) {
+	if (err)
+		return;
+	header.custom = 'SOME NEW VAUE';
+	return header;
+});
+
 // ================================================
 // FILESTORAGE REMOVE
 // ================================================
