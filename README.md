@@ -21,6 +21,13 @@ Storage for storing files
 - MIT license
 - [Example: Picture uploader via total.js](https://github.com/totaljs/examples/tree/master/upload-multipart-filestorage)
 
+Installation
+------------
+
+```
+npm install filestorage
+```
+
 
 How to storage store files?
 ---------------------------
