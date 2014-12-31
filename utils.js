@@ -280,6 +280,8 @@ exports.dimensionJPG = function(buffer) {
             height: h
         };
     }
+
+    return null;
 };
 
 // MIT
