@@ -178,7 +178,6 @@ FileStorage.prototype._append = function(directory, value, id, eventname) {
 FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, type, directory) {
 
     var self = this;
-
     self.onPrepare(filename + EXTENSION_TMP, header, function() {
         fs.stat(filename + EXTENSION_TMP, function(err, stats) {
 
@@ -197,8 +196,7 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
             var read = fs.createReadStream(filename + EXTENSION_TMP);
             read.pipe(stream);
 
-            setImmediate(function() {
-
+            stream.on('finish', function() {
                 fs.unlink(filename + EXTENSION_TMP);
 
                 if (fnCallback)
@@ -206,7 +204,6 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 
                 self._append(directory, header, id.toString(), type);
                 self.emit(type, id, header);
-
             });
 
         });
@@ -392,7 +389,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
         });
     }
 
-    buffer.on('end', function() {
+    stream.on('finish', function() {
         self._writeHeader(index, filename, header, fnCallback, eventname, directory);
     });
 
