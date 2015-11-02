@@ -26,12 +26,12 @@ setTimeout(function() {
 	});
 }, 100);
 */
-
+/*
 filestorage.update('1', function(err, header) {
     header.name = 'invoice2.pdf'
     return header;
     //return null;
-});
+});*/
 
 //filestorage.insert('invoice.pdf', '/users/petersirka/desktop/DATALAN logo CMYK 1+0.pdf');
 // console.log(filestorage.insert('čťčščšĎť.jpg', '/users/petersirka/desktop/levik-anna-maria.jpg'));
@@ -41,3 +41,5 @@ filestorage.update('1', function(err, header) {
 //console.log(filestorage.insert('aaa.jpg', new Buffer(fs.readFileSync('/users/petersirka/desktop/DSC00325.JPG'))));
 //filestorage.update(2, 'smadny-mnich.jpg', '/users/petersirka/desktop/smadny-mnich.jpg', { key: 'value' });
 //filestorage.remove(2);
+
+filestorage.insert('test.txt', new Buffer('Hello World 2', 'utf8'));
