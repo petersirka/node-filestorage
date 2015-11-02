@@ -19,7 +19,6 @@ Storage for storing files
 - supports stat() and copy()
 - 100% pure JavaScript
 - MIT license
-- [Example: Picture uploader via total.js](https://github.com/totaljs/examples/tree/master/upload-multipart-filestorage)
 
 Installation
 ------------
