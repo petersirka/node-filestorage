@@ -780,12 +780,26 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 		var end = 0;
 		var length = stat.length;
 		var isRange = false;
+		var expires = new Date();
+		expires.setMonth(expires.getMonth() + 15);
+
+		var headers = {
+			'Content-Type': stat.type,
+			'Etag': stat.stamp,
+			'Last-Modified': new Date(stat.stamp).toUTCString(),
+			'Accept-Ranges': 'bytes',
+			'Cache-Control': 'public, max-age=11111111',
+			'Expires': expires,
+			'X-Powered-By': 'node.js FileStorage',
+			'Vary': 'Accept-Encoding',
+			'Access-Control-Allow-Origin': '*'
+		};
 
 		if (req) {
 
 			if (req.headers['if-none-match'] === stat.stamp.toString()) {
 				res.success = true;
-				res.writeHead(304);
+				res.writeHead(304, headers);
 				res.end();
 				return;
 			}
@@ -811,20 +825,7 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 			}
 		}
 
-		var expires = new Date();
-		expires.setMonth(expires.getMonth() + 2);
-
-		var headers = {
-			'Content-Type': stat.type,
-			'Content-Length': length,
-			'Etag': stat.stamp,
-			'Last-Modified': new Date(stat.stamp).toUTCString(),
-			'Accept-Ranges': 'bytes',
-			'Cache-Control': 'public',
-			'Expires': expires,
-			'X-Powered-By': 'node.js FileStorage',
-			'Vary': 'Accept-Encoding'
-		};
+		headers['Content-Length'] = length;
 
 		if (stat.width > 0)
 			headers['X-Image-Width'] = stat.width;
