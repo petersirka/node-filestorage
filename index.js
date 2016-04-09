@@ -505,14 +505,24 @@ FileStorage.prototype.stat = function(id, fnCallback) {
 	var index = utils.parseIndex(id.toString());
 	var directory = self._directory(index);
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0') + EXTENSION;
+	var data = [];
 
 	var stream = fs.createReadStream(filename, {
 		start: 0,
 		end: LENGTH_HEADER - 1
 	});
 
-	stream.once('data', function(chunk) {
-		fnCallback(null, JSON.parse(new Buffer(chunk, 'binary').toString(ENCODING).replace(/^[\s]+|[\s]+$/g, '')), filename);
+	stream.once('data', function(chunk){
+		data.push(chunk);
+	});
+	
+	stream.once('end', function() {
+		var buffer = Buffer.concat(data);
+		try {
+			fnCallback(null, JSON.parse(buffer.toString(ENCODING).replace(/^[\s]+|[\s]+$/g, '')), filename);
+		} catch(err) {
+			fnCallback(err, null);
+		}
 	});
 
 	stream.once('error', function(err) {
