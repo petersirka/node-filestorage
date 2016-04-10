@@ -13,9 +13,6 @@ var FILENAME_DB = 'config';
 var FILENAME_CHANGELOG = 'changelog.log';
 var EXTENSION = '.data';
 var EXTENSION_TMP = '.tmp';
-var UNDEFINED = 'undefined';
-var STRING = 'string';
-var BOOLEAN = 'boolean';
 var JPEG = 'image/jpeg';
 var PNG = 'image/png';
 var GIF = 'image/gif';
@@ -89,10 +86,10 @@ FileStorage.prototype._append_changelog = function(id, description) {
 
 	var self = this;
 
-	if (typeof(id) === UNDEFINED)
+	if (typeof(id) === 'undefined')
 		return self;
 
-	if (typeof(description) === UNDEFINED)
+	if (typeof(description) === 'undefined')
 		return self;
 
 	var dd = new Date();
@@ -262,7 +259,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	var self = this;
 	var options = self.options;
 
-	if (typeof(buffer) === UNDEFINED) {
+	if (typeof(buffer) === 'undefined') {
 		var customError = new Error('Buffer is undefined.');
 		self.emit('error', customError);
 		fnCallback(customError, null, null);
@@ -278,7 +275,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	var index = 0;
 	var eventname = 'update';
 
-	if (typeof(id) === UNDEFINED) {
+	if (typeof(id) === 'undefined') {
 		options.index++;
 		index = options.index;
 		eventname = 'insert';
@@ -311,14 +308,14 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 		custom: custom
 	};
 
-	if (typeof(buffer) === STRING) {
+	if (typeof(buffer) === 'string') {
 		if (buffer.length % 4 === 0 && buffer.match(/^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/) !== null)
 			buffer = new Buffer(buffer, 'base64');
 		else
 			buffer = fs.createReadStream(buffer.replace(/\\/g, '/'));
 	}
 
-	var isBuffer = typeof(buffer.pipe) === UNDEFINED;
+	var isBuffer = typeof(buffer.pipe) === 'undefined';
 	var size = null;
 
 	if (isBuffer) {
@@ -466,7 +463,7 @@ FileStorage.prototype.remove = function(id, fnCallback, change) {
 	var directory = self._directory(index);
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0') + EXTENSION;
 
-	if (typeof(fnCallback) === STRING) {
+	if (typeof(fnCallback) === 'string') {
 		var tmp = change;
 		change = fnCallback;
 		fnCallback = tmp;
@@ -515,7 +512,7 @@ FileStorage.prototype.stat = function(id, fnCallback) {
 	stream.once('data', function(chunk){
 		data.push(chunk);
 	});
-	
+
 	stream.once('end', function() {
 		var buffer = Buffer.concat(data);
 		try {
@@ -625,7 +622,7 @@ FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 
 	var self = this;
 
-	if (typeof(fnCallback) === STRING) {
+	if (typeof(fnCallback) === 'string') {
 		var tmp = name;
 		name = fnCallback;
 		fnCallback = tmp;
@@ -639,7 +636,7 @@ FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 			return;
 		}
 
-		if (typeof(name) === UNDEFINED)
+		if (typeof(name) === 'undefined')
 			name = stat.name;
 
 		var stream = fs.createReadStream(filename, {
@@ -729,7 +726,7 @@ FileStorage.prototype.listing = function(fnCallback) {
 
 		var filename = directory.shift();
 
-		if (typeof(filename) === UNDEFINED) {
+		if (typeof(filename) === 'undefined') {
 			self.emit('listing', builder);
 			fnCallback(null, builder);
 			return;
@@ -842,7 +839,7 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 		if (stat.height > 0)
 			headers['X-Image-Height'] = stat.height;
 
-		if (typeof(download) === STRING)
+		if (typeof(download) === 'string')
 			headers['Content-Disposition'] = 'attachment; filename=' + encodeURIComponent(download);
 		else if (download === true)
 			headers['Content-Disposition'] = 'attachment; filename=' + encodeURIComponent(stat.name);
