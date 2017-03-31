@@ -333,7 +333,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 				header.height = size.height;
 			}
 		} else if (header.type === GIF) {
-			size = utils.dimensionGIF(chunk);
+			size = utils.dimensionGIF(buffer);
 			if (size) {
 				header.width = size.width;
 				header.height = size.height;
