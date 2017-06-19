@@ -1,5 +1,4 @@
 var UNDEFINED = 'undefined';
-var exec = require('child_process').exec;
 
 var SOF = {
 	0xc0: true,
@@ -239,10 +238,7 @@ if (!String.prototype.trim) {
 }
 
 exports.dimensionGIF = function(buffer) {
-	return {
-		width: buffer[6],
-		height: buffer[8]
-	};
+	return { width: buffer[6], height: buffer[8] };
 };
 
 // MIT
@@ -271,11 +267,7 @@ exports.dimensionJPG = function(buffer) {
 
 		var w = u16(buffer, o + 6);
 		var h = u16(buffer, o + 4);
-
-		return {
-			width: w,
-			height: h
-		};
+		return { width: w, height: h };
 	}
 
 	return null;
@@ -285,10 +277,7 @@ exports.dimensionJPG = function(buffer) {
 // Written by TJ Holowaychuk
 // visionmedia
 exports.dimensionPNG = function(buffer) {
-	return {
-		width: u32(buffer, 16),
-		height: u32(buffer, 16 + 4)
-	};
+	return { width: u32(buffer, 16), height: u32(buffer, 16 + 4) };
 };
 
 exports.parseIndex = function(id) {

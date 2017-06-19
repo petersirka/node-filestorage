@@ -1,11 +1,14 @@
-var fs = require('fs');
-var util = require('util');
-var path = require('path');
-var utils = require('./utils');
-var parser = require('url');
-var http = require('http');
-var https = require('https');
-var events = require('events');
+const Fs = require('fs');
+const Util = require('util');
+const Path = require('path');
+const Utils = require('./utils');
+const Parser = require('url');
+const Http = require('http');
+const Https = require('https');
+const Events = require('events');
+const NODEVERSION = parseFloat(process.version.toString().replace('v', '').replace(/\./g, ''));
+const REGHEADER = /^[\s]+|[\s]+$/g;
+const CONCAT = [null, null];
 
 var LENGTH_DIRECTORY = 9;
 var LENGTH_HEADER = 2048;
@@ -20,37 +23,94 @@ var ENCODING = 'utf8';
 var NEWLINE = '\r\n';
 var NOTFOUND = '404: File not found.';
 var BOUNDARY = '----' + Math.random().toString(16).substring(2);
+var NOOP = function() {};
+var createBufferSize, createBuffer = null;
+
+if (NODEVERSION > 699) {
+	createBufferSize = (size) => Buffer.alloc(size || 0);
+	createBuffer = (val, type) => Buffer.from(val || '', type);
+} else {
+	createBufferSize = (size) => new Buffer(size || 0);
+	createBuffer = (val, type) => new Buffer(val || '', type);
+}
 
 function FileStorage(directory) {
-
-	this.path = (directory || path.join(path.dirname(process.argv[1]), 'filestorage')).replace(/\\/g, '/');
+	this.$events = {};
+	this.path = (directory || Path.join(Path.dirname(process.argv[1]), 'filestorage')).replace(/\\/g, '/');
 	this.cache = {};
-	this.options = {
-		index: 0,
-		count: 0
-	};
-
+	this.options = { index: 0, count: 0, free: [] };
 	this.verification();
 	this.onPrepare = function(filename, header, next) {
 		next();
 	};
 }
 
-FileStorage.prototype.__proto__ = Object.create(events.EventEmitter.prototype, {
+FileStorage.prototype.__proto__ = Object.create(Events.EventEmitter.prototype, {
 	constructor: {
 		value: FileStorage,
 		enumberable: false
 	}
 });
 
+FileStorage.prototype.emit = function(name, a, b, c, d, e, f, g) {
+	var evt = this.$events[name];
+	if (evt) {
+		var clean = false;
+		for (var i = 0, length = evt.length; i < length; i++) {
+			if (evt[i].$once)
+				clean = true;
+			evt[i].call(this, a, b, c, d, e, f, g);
+		}
+		if (clean) {
+			evt = evt.remove(n => n.$once);
+			if (evt.length)
+				this.$events[name] = evt;
+			else
+				this.$events[name] = undefined;
+		}
+	}
+	return this;
+};
+
+FileStorage.prototype.on = function(name, fn) {
+	if (this.$events[name])
+		this.$events[name].push(fn);
+	else
+		this.$events[name] = [fn];
+	return this;
+};
+
+FileStorage.prototype.once = function(name, fn) {
+	fn.$once = true;
+	return this.on(name, fn);
+};
+
+FileStorage.prototype.removeListener = function(name, fn) {
+	var evt = this.$events[name];
+	if (evt) {
+		evt = evt.remove(n => n === fn);
+		if (evt.length)
+			this.$events[name] = evt;
+		else
+			this.$events[name] = undefined;
+	}
+	return this;
+};
+
+FileStorage.prototype.removeAllListeners = function(name) {
+	if (name === true)
+		this.$events = EMPTYOBJECT;
+	else if (name)
+		this.$events[name] = undefined;
+	else
+		this.$events = {};
+	return this;
+};
+
 FileStorage.prototype.verification = function() {
-
 	var self = this;
-	var options = self.options;
-
 	self._mkdir(self.path, true);
 	self._load();
-
 	return self;
 };
 
@@ -58,27 +118,27 @@ FileStorage.prototype._load = function() {
 
 	var self = this;
 	var options = self.options;
-	var filename = path.join(self.path, FILENAME_DB);
+	var filename = Path.join(self.path, FILENAME_DB);
 
-	if (!fs.existsSync(filename))
+	if (!existsSync(filename))
 		return self;
 
-	var json = fs.readFileSync(filename, ENCODING).toString();
-	if (json.length === 0)
-		return self;
+	var json = Fs.readFileSync(filename, ENCODING).toString();
+	if (json.length) {
+		var config = JSON.parse(json);
+		options.index = config.index;
+		options.count = config.count;
+		options.free = config.free || [];
+	}
 
-	var config = JSON.parse(json);
-
-	options.index = config.index;
-	options.count = config.count;
-
+	!options.free && (options.free = []);
 	return self;
 };
 
 FileStorage.prototype._save = function() {
 	var self = this;
-	var filename = path.join(self.path, FILENAME_DB);
-	fs.writeFile(filename, JSON.stringify(self.options));
+	var filename = Path.join(self.path, FILENAME_DB);
+	Fs.writeFile(filename, JSON.stringify(self.options), NOOP);
 	return self;
 };
 
@@ -86,14 +146,10 @@ FileStorage.prototype._append_changelog = function(id, description) {
 
 	var self = this;
 
-	if (typeof(id) === 'undefined')
-		return self;
-
-	if (typeof(description) === 'undefined')
+	if (!id || !description)
 		return self;
 
 	var dd = new Date();
-
 	var y = dd.getFullYear();
 	var M = (dd.getMonth() + 1).toString();
 	var d = dd.getDate().toString();
@@ -117,8 +173,7 @@ FileStorage.prototype._append_changelog = function(id, description) {
 		s = '0' + s;
 
 	var dt = y + '-' + M + '-' + d + ' ' + h + ':' + m + ':' + s;
-	fs.appendFile(path.join(self.path, FILENAME_CHANGELOG), dt + ' - #' + id + ' ' + description + '\n');
-
+	Fs.appendFile(Path.join(self.path, FILENAME_CHANGELOG), dt + ' - #' + id + ' ' + description + '\n', NOOP);
 	return self;
 };
 
@@ -130,13 +185,11 @@ FileStorage.prototype._append = function(directory, value, id, eventname) {
 	var num = typeof(id) === 'number' ? id : parseInt(id, 10);
 
 	if (eventname === 'insert') {
-		fs.appendFile(filename, JSON.stringify(util._extend({
-			id: num
-		}, value)) + '\n');
+		Fs.appendFile(filename, JSON.stringify(Util._extend({ id: num }, value)) + '\n', NOOP);
 		return self;
 	}
 
-	fs.readFile(filename, function(err, data) {
+	Fs.readFile(filename, function(err, data) {
 
 		var arr = err ? [] : data.toString('utf8').split('\n');
 		var length = arr.length;
@@ -156,17 +209,13 @@ FileStorage.prototype._append = function(directory, value, id, eventname) {
 			}
 
 			if (line.indexOf('"id":' + id + ',') !== -1) {
-				if (eventname === 'update')
-					builder.push(JSON.stringify(util._extend({
-						id: num
-					}, value)));
-
+				eventname === 'update' && builder.push(JSON.stringify(Util._extend({ id: num }, value)));
 				isHit = true;
 			} else
 				builder.push(line);
 		}
 
-		fs.writeFile(filename, builder.join('\n') + '\n');
+		Fs.writeFile(filename, builder.join('\n') + '\n', NOOP);
 	});
 
 	return self;
@@ -176,29 +225,26 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 
 	var self = this;
 	self.onPrepare(filename + EXTENSION_TMP, header, function() {
-		fs.stat(filename + EXTENSION_TMP, function(err, stats) {
+		Fs.stat(filename + EXTENSION_TMP, function(err, stats) {
 
 			if (!err)
 				header.length = stats.size;
 
-			header.stamp = new Date().getTime();
+			header.stamp = Date.now();
 
-			var json = new Buffer(LENGTH_HEADER);
+			var json = createBufferSize(LENGTH_HEADER);
 			json.fill(' ');
 			json.write(JSON.stringify(header));
 
-			var stream = fs.createWriteStream(filename + EXTENSION);
+			var stream = Fs.createWriteStream(filename + EXTENSION);
 			stream.write(json, 'binary');
 
-			var read = fs.createReadStream(filename + EXTENSION_TMP);
+			var read = Fs.createReadStream(filename + EXTENSION_TMP);
 			read.pipe(stream);
 
 			stream.on('finish', function() {
-				fs.unlink(filename + EXTENSION_TMP);
-
-				if (fnCallback)
-					fnCallback(null, id, header);
-
+				Fs.unlink(filename + EXTENSION_TMP, NOOP);
+				fnCallback && fnCallback(null, id, header);
 				self._append(directory, header, id.toString(), type);
 				self.emit(type, id, header);
 			});
@@ -214,7 +260,6 @@ FileStorage.prototype._directory_index = function(index) {
 
 FileStorage.prototype._directory = function(index, isDirectory) {
 	var self = this;
-	var options = self.options;
 	var id = (isDirectory ? index : self._directory_index(index)).toString().padLeft(LENGTH_DIRECTORY, '0');
 	var length = id.length;
 	var directory = '';
@@ -222,7 +267,7 @@ FileStorage.prototype._directory = function(index, isDirectory) {
 	for (var i = 0; i < length; i++)
 		directory += (i % 3 === 0 && i > 0 ? '-' : '') + id[i];
 
-	return path.join(self.path, directory);
+	return Path.join(self.path, directory);
 };
 
 FileStorage.prototype._mkdir = function(directory, noPath) {
@@ -231,37 +276,29 @@ FileStorage.prototype._mkdir = function(directory, noPath) {
 	var cache = self.cache;
 
 	if (!noPath)
-		directory = path.join(self.path, directory);
+		directory = Path.join(self.path, directory);
 
 	var key = 'directory-' + directory;
 
 	if (cache[key])
 		return true;
 
-	if (!fs.existsSync(directory))
-		fs.mkdirSync(directory);
+	try {
+		Fs.mkdirSync(directory);
+	} catch (e) {}
 
 	cache[key] = true;
 	return true;
 };
 
-/*
-	Insert a file
-	@name {String}
-	@buffer {String, Stream, Buffer}
-	@custom {String, Object} :: optional
-	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
-	@change {String} :: optional, changelog
-	return {Number} :: file id
-*/
 FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change, id) {
 
 	var self = this;
 	var options = self.options;
 
-	if (typeof(buffer) === 'undefined') {
+	if (buffer === undefined) {
 		var customError = new Error('Buffer is undefined.');
-		self.emit('error', customError);
+		self.$events.error && self.emit('error', customError);
 		fnCallback(customError, null, null);
 		return;
 	}
@@ -276,32 +313,37 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	var eventname = 'update';
 
 	if (typeof(id) === 'undefined') {
-		options.index++;
-		index = options.index;
-		eventname = 'insert';
-		options.count++;
+		var free = options.free.length ? options.free.shift() : 0;
+		if (free) {
+			index = Utils.parseIndex(free);
+			eventname = 'insert';
+			options.count++;
+			id = undefined;
+		} else {
+			options.index++;
+			index = options.index;
+			eventname = 'insert';
+			options.count++;
+		}
 	} else
-		index = utils.parseIndex(id);
+		index = Utils.parseIndex(id);
 
-	if (change)
-		self._append_changelog(index, change);
-
+	change && self._append_changelog(index, change);
 	var directory = self._directory(index);
-
 	self._mkdir(directory, true);
 
-	name = path.basename(name);
+	name = Path.basename(name);
 
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0');
-	var stream = fs.createWriteStream(filename + EXTENSION_TMP);
+	var stream = Fs.createWriteStream(filename + EXTENSION_TMP);
 
 	self._save();
 
-	var ext = utils.extension(name);
+	var ext = Utils.extension(name);
 	var header = {
 		name: name,
 		extension: ext,
-		type: utils.contentType(ext),
+		type: Utils.contentType(ext),
 		width: 0,
 		height: 0,
 		length: 0,
@@ -310,9 +352,9 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 
 	if (typeof(buffer) === 'string') {
 		if (buffer.length % 4 === 0 && buffer.match(/^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/) !== null)
-			buffer = new Buffer(buffer, 'base64');
+			buffer = createBuffer(buffer, 'base64');
 		else
-			buffer = fs.createReadStream(buffer.replace(/\\/g, '/'));
+			buffer = Fs.createReadStream(buffer.replace(/\\/g, '/'));
 	}
 
 	var isBuffer = typeof(buffer.pipe) === 'undefined';
@@ -320,24 +362,16 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 
 	if (isBuffer) {
 
-		if (header.type === JPEG) {
-			size = utils.dimensionJPG(buffer);
-			if (size) {
-				header.width = size.width;
-				header.height = size.height;
-			}
-		} else if (header.type === PNG) {
-			size = utils.dimensionPNG(buffer);
-			if (size) {
-				header.width = size.width;
-				header.height = size.height;
-			}
-		} else if (header.type === GIF) {
-			size = utils.dimensionGIF(buffer);
-			if (size) {
-				header.width = size.width;
-				header.height = size.height;
-			}
+		if (header.type === JPEG)
+			size = Utils.dimensionJPG(buffer);
+		else if (header.type === PNG)
+			size = Utils.dimensionPNG(buffer);
+		else if (header.type === GIF)
+			size = Utils.dimensionGIF(buffer);
+
+		if (size) {
+			header.width = size.width;
+			header.height = size.height;
 		}
 
 		stream.on('finish', function() {
@@ -354,34 +388,25 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 
 		buffer.on('data', function onData(chunk) {
 
-			if (size !== null) {
+			if (size) {
 				buffer.removeListener('data', onData);
 				return;
 			}
 
 			if (header.type === JPEG) {
-				size = utils.dimensionJPG(chunk);
-
+				size = Utils.dimensionJPG(chunk);
 				if (size === null)
 					return;
-
 				header.width = size.width;
 				header.height = size.height;
-				return;
-			}
-
-			if (header.type === PNG) {
-				size = utils.dimensionPNG(chunk);
+			} else if (header.type === PNG) {
+				size = Utils.dimensionPNG(chunk);
 				header.width = size.width;
 				header.height = size.height;
-				return;
-			}
-
-			if (header.type === GIF) {
-				size = utils.dimensionGIF(chunk);
+			} else if (header.type === GIF) {
+				size = Utils.dimensionGIF(chunk);
 				header.width = size.width;
 				header.height = size.height;
-				return;
 			}
 
 		});
@@ -394,32 +419,14 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	return index;
 };
 
-/*
-	Update a file
-	@id {String or Number}
-	@name {String}
-	@buffer {String, Stream, Buffer}
-	@custom {String, Object} :: optional
-	@fnCallback {Function} :: optional, params: @err {Error}, @id {Number}, @stat {Object}
-	@change {String} :: optional, changelog
-	return {Number}
-*/
 FileStorage.prototype.update = function(id, name, buffer, custom, fnCallback, change) {
-	if (typeof(name) === 'function')
-		return this.update_header(id, name, buffer);
-	return this.insert(name, buffer, custom, fnCallback, change, id);
+	return typeof(name) === 'function' ? this.update_header(id, name, buffer) : this.insert(name, buffer, custom, fnCallback, change, id);
 };
 
-/*
-	Change header informations
-	@id {String or Number}
-	@fnCallback {Function(err, header)} :: must return a new header.
-	return {Object}
- */
 FileStorage.prototype.update_header = function(id, fnCallback, change) {
 
 	var self = this;
-	var index = utils.parseIndex(id);
+	var index = Utils.parseIndex(id);
 
 	if (change)
 		self._append_changelog(index, change);
@@ -430,8 +437,8 @@ FileStorage.prototype.update_header = function(id, fnCallback, change) {
 		var header = fnCallback(null, stat);
 		if (!header)
 			return;
-		var writer = fs.createWriteStream(filename, { start: 0, flags: 'r+' });
-		var json = new Buffer(LENGTH_HEADER);
+		var writer = Fs.createWriteStream(filename, { start: 0, flags: 'r+' });
+		var json = createBufferSize(LENGTH_HEADER);
 		json.fill(' ');
 		json.write(JSON.stringify(header));
 		writer.end(json);
@@ -440,26 +447,18 @@ FileStorage.prototype.update_header = function(id, fnCallback, change) {
 	return self;
 };
 
-/*
-	Remove a file
-	@id {String or Number}
-	@fnCallback {Function} :: optional, params: @err {Error}
-	@change {String} :: optional, changelog
-	return {FileStorage}
-*/
 FileStorage.prototype.remove = function(id, fnCallback, change) {
 
 	var self = this;
 
 	if (id === 'change' || id === 'changelog') {
-		fs.unlink(path.join(self.path, FILENAME_CHANGELOG), function(err) {
-			if (fnCallback)
-				fnCallback(err);
+		Fs.unlink(Path.join(self.path, FILENAME_CHANGELOG), function(err) {
+			fnCallback && fnCallback(err);
 		});
 		return self;
 	}
 
-	var index = utils.parseIndex(id.toString());
+	var index = Utils.parseIndex(id.toString());
 	var directory = self._directory(index);
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0') + EXTENSION;
 
@@ -469,42 +468,34 @@ FileStorage.prototype.remove = function(id, fnCallback, change) {
 		fnCallback = tmp;
 	}
 
-	if (change)
-		self._append_changelog(index, change);
+	change && self._append_changelog(index, change);
 
-	fs.unlink(filename, function(err) {
+	Fs.unlink(filename, function(err) {
 
 		if (!err) {
 			self.options.count--;
-			self.emit('remove', id);
+			self.$events.remove && self.emit('remove', id);
 			self._append(directory, null, index.toString(), 'remove');
+			self.options.free.push(id);
 			self._save();
 		} else
-			self.emit('error', err);
+			self.$events.error && self.emit('error', err);
 
-		if (fnCallback)
-			fnCallback(err !== null ? err.errno === 34 ? new Error(NOTFOUND) : err : null);
-
+		fnCallback && fnCallback(err !== null ? err.errno === 34 ? new Error(NOTFOUND) : err : null);
 	});
 
 	return self;
 };
 
-/*
-	A file information
-	@id {String or Number}
-	@fnCallback {Function} :: params: @err {Error}, @stat {Object}
-	return {FileStorage}
-*/
 FileStorage.prototype.stat = function(id, fnCallback) {
 
 	var self = this;
-	var index = utils.parseIndex(id.toString());
+	var index = Utils.parseIndex(id.toString());
 	var directory = self._directory(index);
 	var filename = directory + '/' + index.toString().padLeft(LENGTH_DIRECTORY, '0') + EXTENSION;
 	var data = [];
 
-	var stream = fs.createReadStream(filename, {
+	var stream = Fs.createReadStream(filename, {
 		start: 0,
 		end: LENGTH_HEADER - 1
 	});
@@ -516,14 +507,14 @@ FileStorage.prototype.stat = function(id, fnCallback) {
 	stream.once('end', function() {
 		var buffer = Buffer.concat(data);
 		try {
-			fnCallback(null, JSON.parse(buffer.toString(ENCODING).replace(/^[\s]+|[\s]+$/g, '')), filename);
+			fnCallback(null, JSON.parse(buffer.toString(ENCODING).replace(REGHEADER, '')), filename);
 		} catch(err) {
 			fnCallback(err, null);
 		}
 	});
 
 	stream.once('error', function(err) {
-		self.emit('error', err);
+		self.$events.error && self.emit('error', err);
 		fnCallback(err.errno === 34 ? new Error(NOTFOUND) : err, null);
 	});
 
@@ -551,7 +542,7 @@ FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 	self.stat(id, function(err, stat, filename) {
 
 		if (err) {
-			self.emit('error', err);
+			self.$events.error && self.emit('error', err);
 			fnCallback(err, null);
 			return;
 		}
@@ -559,52 +550,50 @@ FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 		var h = {};
 
 		if (headers)
-			util._extend(h, headers);
+			Util._extend(h, headers);
 
 		h['Cache-Control'] = 'max-age=0';
 		h['Content-Type'] = 'multipart/form-data; boundary=' + BOUNDARY;
 
-		var options = parser.parse(url);
+		var options = Parser.parse(url);
 
 		options.agent = false;
 		options.method = 'POST';
 		options.headers = h;
 
 		var response = function(res) {
-			res.body = '';
+			res.body = createBufferSize(0);
 
 			res.on('data', function(chunk) {
-				this.body += chunk.toString(ENCODING);
+				CONCAT[0] = res.body;
+				CONCAT[1] = chunk;
+				res.body = Buffer.concat(CONCAT);
 			});
 
 			res.on('end', function() {
-				fnCallback(null, res.body);
-				self.emit('send', id, stat, url);
+				fnCallback(null, res.body.toString('utf8'));
+				self.$events.send && self.emit('send', id, stat, url);
 			});
 		};
 
-		var connection = options.protocol === 'https:' ? https : http;
+		var connection = options.protocol === 'https:' ? Https : Http;
 		var req = connection.request(options, response);
 
 		req.on('error', function(err) {
-			self.emit('error', err);
+			self.$events.error && self.emit('error', err);
 			fnCallback(err, null);
 		});
 
 		var header = NEWLINE + NEWLINE + '--' + BOUNDARY + NEWLINE + 'Content-Disposition: form-data; name="File"; filename="' + stat.name + '"' + NEWLINE + 'Content-Type: ' + stat.type + NEWLINE + NEWLINE;
 		req.write(header);
 
-		var stream = fs.createReadStream(filename, {
-			start: LENGTH_HEADER
-		});
+		var stream = Fs.createReadStream(filename, { start: LENGTH_HEADER });
 
 		stream.on('end', function() {
 			req.end(NEWLINE + NEWLINE + '--' + BOUNDARY + '--');
 		});
 
-		stream.pipe(req, {
-			end: false
-		});
+		stream.pipe(req, { end: false });
 	});
 
 	return self;
@@ -631,7 +620,7 @@ FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 	self.stat(id, function(err, stat, filename) {
 
 		if (err) {
-			self.emit('error', err);
+			self.$events.error && self.emit('error', err);
 			fnCallback(err);
 			return;
 		}
@@ -639,18 +628,12 @@ FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 		if (typeof(name) === 'undefined')
 			name = stat.name;
 
-		var stream = fs.createReadStream(filename, {
-			start: LENGTH_HEADER
-		});
-		self.emit('copy', id, stat, stream, directory);
+		var stream = Fs.createReadStream(filename, { start: LENGTH_HEADER });
+		self.$events.copy && self.emit('copy', id, stat, stream, directory);
 
-		var writer = fs.createWriteStream(path.join(directory, name));
+		var writer = Fs.createWriteStream(Path.join(directory, name));
 		stream.pipe(writer);
-
-		if (!fnCallback)
-			return;
-
-		stream.on('end', function() {
+		fnCallback && stream.on('end', function() {
 			fnCallback(null);
 		});
 	});
@@ -671,37 +654,14 @@ FileStorage.prototype.read = function(id, fnCallback) {
 	self.stat(id, function(err, stat, filename) {
 
 		if (err) {
-			self.emit('error', err);
+			self.$events.error && self.emit('error', err);
 			fnCallback(err, null);
 			return;
 		}
 
-		var stream = fs.createReadStream(filename, {
-			start: LENGTH_HEADER
-		});
-
-		self.emit('read', id, stat, stream);
+		var stream = Fs.createReadStream(filename, { start: LENGTH_HEADER });
+		self.$events.read && self.emit('read', id, stat, stream);
 		fnCallback(null, stream, stat);
-
-	});
-
-	return self;
-};
-
-FileStorage.prototype.read_header = function(id, fnCallback) {
-
-	var self = this;
-
-	self.stat(id, function(err, stat, filename) {
-
-		if (err) {
-			self.emit('error', err);
-			fnCallback(err, null);
-			return;
-		}
-
-
-
 	});
 
 	return self;
@@ -726,16 +686,16 @@ FileStorage.prototype.listing = function(fnCallback) {
 
 		var filename = directory.shift();
 
-		if (typeof(filename) === 'undefined') {
-			self.emit('listing', builder);
+		if (!filename) {
+			self.$events.listing && self.emit('listing', builder);
 			fnCallback(null, builder);
 			return;
 		}
 
-		fs.readFile(path.join(filename, FILENAME_DB), function(err, data) {
+		Fs.readFile(Path.join(filename, FILENAME_DB), function(err, data) {
 
 			if (err)
-				self.emit('error', err);
+				self.$events.error && self.emit('error', err);
 			else
 				builder.push(data.toString('utf8').trim());
 
@@ -766,9 +726,7 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 
 			if (isResponse) {
 				res.success = true;
-				res.writeHead(404, {
-					'Content-Type': 'text/plain'
-				});
+				res.writeHead(404, { 'Content-Type': 'text/plain' });
 				res.end(NOTFOUND);
 				return;
 			}
@@ -777,7 +735,7 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 		}
 
 		if (!isResponse) {
-			self.emit('pipe', id, stat, fs.createReadStream(filename, {
+			self.$events.pipe && self.emit('pipe', id, stat, fs.createReadStream(filename, {
 				start: LENGTH_HEADER
 			}).pipe(req), req);
 			return;
@@ -867,27 +825,23 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 			headers['Content-Range'] = 'bytes ' + beg + '-' + end + '/' + stat.length;
 
 		res.writeHead(isRange ? 206 : 200, headers);
-		self.emit('pipe', id, stat, fs.createReadStream(filename, options).pipe(res));
-
+		self.$events.pipe && self.emit('pipe', id, stat, Fs.createReadStream(filename, options).pipe(res));
 	});
 
 	return self;
 };
 
-/*
-	Read the changelog
-	@fnCallback {Function} :: params: @err {Error}, @changes {String Array}
-	return {FileStorage}
-*/
 FileStorage.prototype.changelog = function(fnCallback) {
 
 	var self = this;
-	var stream = fs.createReadStream(path.join(self.path, FILENAME_CHANGELOG));
+	var stream = Fs.createReadStream(Path.join(self.path, FILENAME_CHANGELOG));
 
-	stream._changedata = '';
+	stream._changedata = createBufferSize(0);
 
 	stream.on('data', function(chunk) {
-		this._changedata += chunk.toString('utf8');
+		CONCAT[0] = this._changedata;
+		CONCAT[1] = chunk;
+		this._changedata = Buffer.concat(CONCAT);
 	});
 
 	stream.on('error', function(err) {
@@ -895,8 +849,8 @@ FileStorage.prototype.changelog = function(fnCallback) {
 	});
 
 	stream.on('end', function() {
-		var data = this._changedata.split('\n');
-		self.emit('changelog', data);
+		var data = this._changedata.toString('utf8').split('\n');
+		self.$events.changelog && self.emit('changelog', data);
 		fnCallback(null, data);
 	});
 
@@ -908,3 +862,12 @@ exports.create = function(path) {
 	storage.on('error', function() {});
 	return storage;
 };
+
+function existsSync(filename, file) {
+	try {
+		var val = Fs.statSync(filename);
+		return val ? (file ? val.isFile() : true) : false;
+	} catch (e) {
+		return false;
+	}
+}
