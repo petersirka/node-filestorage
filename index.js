@@ -246,7 +246,7 @@ FileStorage.prototype._writeHeader = function(id, filename, header, fnCallback, 
 				Fs.unlink(filename + EXTENSION_TMP, NOOP);
 				fnCallback && fnCallback(null, id, header);
 				self._append(directory, header, id.toString(), type);
-				self.emit(type, id, header);
+				self.$events[type] && self.emit(type, id, header);
 			});
 		});
 	});
@@ -382,6 +382,17 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 		return index;
 	}
 
+	buffer.on('error', function() {
+
+		if (eventname === 'insert') {
+			options.free.push(index);
+			self._save();
+			Fs.unlink(filename + EXTENSION_TMP, NOOP);
+		}
+
+		header = null;
+	});
+
 	buffer.pipe(stream);
 
 	if (header.type === JPEG || header.type === PNG || header.type === GIF) {
@@ -413,7 +424,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	}
 
 	stream.on('finish', function() {
-		self._writeHeader(index, filename, header, fnCallback, eventname, directory);
+		header && self._writeHeader(index, filename, header, fnCallback, eventname, directory);
 	});
 
 	return index;
