@@ -49,6 +49,9 @@ How to storage store files?
 
 var storage = require('filestorage').create('/path/to/directory/');
 
+// Do you want to re-assign id of removed files? If yes, set:
+// storage.reassign = true;
+
 // You can create more file storages
 // EXAMPLE:
 var storage_users = require('filestorage').create('/path/to/users/');

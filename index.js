@@ -39,6 +39,7 @@ function FileStorage(directory) {
 	this.path = (directory || Path.join(Path.dirname(process.argv[1]), 'filestorage')).replace(/\\/g, '/');
 	this.cache = {};
 	this.options = { index: 0, count: 0, free: [] };
+	this.reassign = false;
 	this.verification();
 	this.onPrepare = function(filename, header, next) {
 		next();
@@ -385,7 +386,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 	buffer.on('error', function() {
 
 		if (eventname === 'insert') {
-			options.free.push(index);
+			self.reassign && options.free.push(index);
 			self._save();
 			Fs.unlink(filename + EXTENSION_TMP, NOOP);
 		}
@@ -487,7 +488,7 @@ FileStorage.prototype.remove = function(id, fnCallback, change) {
 			self.options.count--;
 			self.$events.remove && self.emit('remove', id);
 			self._append(directory, null, index.toString(), 'remove');
-			self.options.free.push(id);
+			self.reassign && self.options.free.push(id);
 			self._save();
 		} else
 			self.$events.error && self.emit('error', err);
