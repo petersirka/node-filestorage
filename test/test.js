@@ -13,7 +13,7 @@ filestorage.listing(function(err, data) {
 filestorage.stat(1, function(err, stat) {
 	console.log(err, stat);
 });
-*/
+*
 /*
 setTimeout(function() {
     filestorage.pipe(1, fs.createWriteStream('/users/petersirka/desktop/output1.pdf'));
@@ -35,11 +35,21 @@ filestorage.update('1', function(err, header) {
 
 //filestorage.insert('invoice.pdf', '/users/petersirka/desktop/DATALAN logo CMYK 1+0.pdf');
 // console.log(filestorage.insert('čťčščšĎť.jpg', '/users/petersirka/desktop/levik-anna-maria.jpg'));
-//filestorage.insert('logo.jpg', '/users/petersirka/desktop/DSC00325.JPG');
+
+// filestorage.insert('logo.jpg', '/users/petersirka/desktop/DSC00325.JPG');
 //filestorage.insert('aaaa.gif', '/users/petersirka/desktop/aaaa.gif');
 //filestorage.insert('6551260034.pdf', '/users/petersirka/desktop/6551260034.pdf');
 //console.log(filestorage.insert('aaa.jpg', new Buffer(fs.readFileSync('/users/petersirka/desktop/DSC00325.JPG'))));
 //filestorage.update(2, 'smadny-mnich.jpg', '/users/petersirka/desktop/smadny-mnich.jpg', { key: 'value' });
-//filestorage.remove(2);
+// filestorage.remove(2);
 
-filestorage.insert('test.txt', new Buffer('Hello World 2', 'utf8'));
+var id = filestorage.insert('test.txt', new Buffer('Hello World 2', 'utf8'));
+setTimeout(function() {
+	console.log(id);
+	filestorage.remove(id);
+	setTimeout(function() {
+		id = filestorage.insert('test.txt', new Buffer('Hello World 2', 'utf8'));
+		console.log(id);
+	}, 100);
+}, 100);
+
