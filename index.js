@@ -292,6 +292,45 @@ FileStorage.prototype._mkdir = function(directory, noPath) {
 	return true;
 };
 
+FileStorage.prototype.find = function(filter, fnCallback) {
+
+	var self = this;
+	var max = self._directory_index(self.options.index);
+	var directory = [];
+	var builder = [];
+	var output = [];
+
+	for (var i = 1; i <= max; i++)
+		directory.push(self._directory(i, true));
+
+	function config() {
+
+		var filename = directory.shift();
+
+		if (!filename) {
+			self.$events.listing && self.emit('listing', builder);
+			fnCallback(null, output);
+			return;
+		}
+
+		Fs.readFile(Path.join(filename, FILENAME_DB), function(err, data) {
+			if (data) {
+				var arr = data.toString('utf8').split('\n');
+				for (var i = 0, length = arr.length; i < length; i++) {
+					if (arr[i]) {
+						var file = JSON.parse(arr[i]);
+						filter(file) && output.push(file);
+					}
+				}
+			}
+			config();
+		});
+	}
+
+	config();
+	return self;
+};
+
 FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change, id) {
 
 	var self = this;
@@ -358,7 +397,7 @@ FileStorage.prototype.insert = function(name, buffer, custom, fnCallback, change
 			buffer = Fs.createReadStream(buffer.replace(/\\/g, '/'));
 	}
 
-	var isBuffer = typeof(buffer.pipe) === 'undefined';
+	var isBuffer = buffer.pipe === undefined;
 	var size = null;
 
 	if (isBuffer) {

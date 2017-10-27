@@ -346,6 +346,34 @@ storage.listing(function(err, arr) {
 });
 
 // ================================================
+// +v1.7.0 FIND FILES
+// ================================================
+
+storage.find(function(file) {
+
+	/* Example of "file" object:
+	{
+		id: 5,
+		stamp: 1509097785616,
+		custom: { 'license': true },
+		length: 13,
+		height: 0,
+		width: 0,
+		type: 'text/plain',
+		extension: 'txt',
+		name: 'test.txt'
+	}
+	*/
+
+	// This method needs to return a Boolean value
+	// "true" the file will be added in response list, "false" skips a file from the response
+	return file.custom && file.custom.license === true;
+}, function(err, response) {
+	// response === Array of Files
+	console.log(response);
+});
+
+// ================================================
 // FILESTORAGE CHANGELOG
 // ================================================
 
