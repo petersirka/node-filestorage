@@ -1,6 +1,7 @@
 Storage for storing files
 =========================
 
+- IMPORTANT: __CLUSTER NOT SUPPORTED__
 - Best use with [www.totaljs.com](http://www.totaljs.com)
 - perfect solution for web sites
 - supports custom path
@@ -41,9 +42,7 @@ How to storage store files?
 
 > The benefit: querying by the file ID {Number} and auto-pipe to HttpResponse
 
-
 ***
-
 
 ```javascript
 
