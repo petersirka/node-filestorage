@@ -9,9 +9,10 @@ const Events = require('events');
 const NODEVERSION = parseFloat(process.version.toString().replace('v', '').replace(/\./g, ''));
 const REGHEADER = /^[\s]+|[\s]+$/g;
 const CONCAT = [null, null];
+const LENGTH_HEADER = 2048;
+const LENGTH_DIRECTORY = 9;
+const PIPE = { start: LENGTH_HEADER };
 
-var LENGTH_DIRECTORY = 9;
-var LENGTH_HEADER = 2048;
 var FILENAME_DB = 'config';
 var FILENAME_CHANGELOG = 'changelog.log';
 var EXTENSION = '.data';
@@ -638,12 +639,9 @@ FileStorage.prototype.send = function(id, url, fnCallback, headers) {
 		var header = NEWLINE + NEWLINE + '--' + BOUNDARY + NEWLINE + 'Content-Disposition: form-data; name="File"; filename="' + stat.name + '"' + NEWLINE + 'Content-Type: ' + stat.type + NEWLINE + NEWLINE;
 		req.write(header);
 
-		var stream = Fs.createReadStream(filename, { start: LENGTH_HEADER });
+		var stream = Fs.createReadStream(filename, PIPE);
 
-		stream.on('end', function() {
-			req.end(NEWLINE + NEWLINE + '--' + BOUNDARY + '--');
-		});
-
+		stream.on('end', () => req.end(NEWLINE + NEWLINE + '--' + BOUNDARY + '--'));
 		stream.pipe(req, { end: false });
 	});
 
@@ -679,7 +677,7 @@ FileStorage.prototype.copy = function(id, directory, fnCallback, name) {
 		if (typeof(name) === 'undefined')
 			name = stat.name;
 
-		var stream = Fs.createReadStream(filename, { start: LENGTH_HEADER });
+		var stream = Fs.createReadStream(filename, PIPE);
 		self.$events.copy && self.emit('copy', id, stat, stream, directory);
 
 		var writer = Fs.createWriteStream(Path.join(directory, name));
@@ -710,7 +708,7 @@ FileStorage.prototype.read = function(id, fnCallback) {
 			return;
 		}
 
-		var stream = Fs.createReadStream(filename, { start: LENGTH_HEADER });
+		var stream = Fs.createReadStream(filename, PIPE);
 		self.$events.read && self.emit('read', id, stat, stream);
 		fnCallback(null, stream, stat);
 	});
@@ -786,9 +784,8 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 		}
 
 		if (!isResponse) {
-			self.$events.pipe && self.emit('pipe', id, stat, fs.createReadStream(filename, {
-				start: LENGTH_HEADER
-			}).pipe(req), req);
+			var reader = Fs.createReadStream(filename, PIPE).pipe(req);
+			self.$events.pipe && self.emit('pipe', id, stat, reader, req);
 			return;
 		}
 
@@ -843,15 +840,13 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 
 		headers['Content-Length'] = length;
 
-		if (stat.width > 0)
+		if (stat.width)
 			headers['X-Image-Width'] = stat.width;
-		if (stat.height > 0)
+		if (stat.height)
 			headers['X-Image-Height'] = stat.height;
 
-		if (typeof(download) === 'string')
-			headers['Content-Disposition'] = 'attachment; filename=' + encodeURIComponent(download);
-		else if (download === true)
-			headers['Content-Disposition'] = 'attachment; filename=' + encodeURIComponent(stat.name);
+		if (download === true || typeof(download) === 'string')
+			headers['Content-Disposition'] = 'attachment; filename=' + encodeURIComponent(download === true ? stat.name : download);
 
 		var options = {
 			start: LENGTH_HEADER
