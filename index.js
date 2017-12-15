@@ -871,7 +871,8 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 			headers['Content-Range'] = 'bytes ' + beg + '-' + end + '/' + stat.length;
 
 		res.writeHead(isRange ? 206 : 200, headers);
-		self.$events.pipe && self.emit('pipe', id, stat, Fs.createReadStream(filename, options).pipe(res));
+		var reader = Fs.createReadStream(filename, options).pipe(res);
+		self.$events.pipe && self.emit('pipe', id, stat, reader, req);
 	});
 
 	return self;
