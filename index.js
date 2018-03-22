@@ -794,6 +794,7 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 		var length = stat.length;
 		var isRange = false;
 		var expires = new Date();
+
 		expires.setMonth(expires.getMonth() + 15);
 
 		var headers = {
@@ -802,7 +803,7 @@ FileStorage.prototype.pipe = function(id, req, res, download) {
 			'Last-Modified': new Date(stat.stamp).toUTCString(),
 			'Accept-Ranges': 'bytes',
 			'Cache-Control': 'public, max-age=11111111',
-			'Expires': expires,
+			'Expires': expires.toUTCString(),
 			'X-Powered-By': 'node.js FileStorage',
 			'Vary': 'Accept-Encoding',
 			'Access-Control-Allow-Origin': '*'
